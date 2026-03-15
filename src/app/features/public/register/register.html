@@ -1,0 +1,740 @@
+<div class="register-page">
+  <!-- Bouton Accueil -->
+  <button class="home-btn" (click)="goToHome()">Home</button>
+
+  <div class="register-container">
+    <h2>Create an account</h2>
+
+    <!-- PROGRESS BAR SIMPLE -->
+    <div class="progress-bar" *ngIf="step === 2">
+      <div class="progress-step" [class.active]="step >= 1" [class.completed]="step > 1">
+        <span>Role</span>
+      </div>
+      <div class="progress-line" [class.active]="step > 1"></div>
+      <div class="progress-step" [class.active]="step >= 2">
+        <span>Information</span>
+      </div>
+    </div>
+
+    <!-- ÉTAPE 1 : Choix du rôle -->
+    <div *ngIf="step === 1" class="step-panel">
+      <h3>What is your profile?</h3>
+      <p class="step-desc">Select your role to create a suitable account</p>
+
+      <div class="error-message" *ngIf="errorMsg">{{ errorMsg }}</div>
+
+      <div class="roles-simple">
+        <div
+          *ngFor="let role of roles"
+          class="role-item"
+          [class.selected]="selectedRole === role.value"
+          (click)="selectRole(role.value)">
+          <div class="role-name">{{ role.label }}</div>
+          <div class="role-desc">{{ role.description }}</div>
+        </div>
+      </div>
+
+      <button class="continue-btn" (click)="goToStep2()" [disabled]="!selectedRole">
+        Continue →
+      </button>
+    </div>
+
+    <!-- ÉTAPE 2 : Formulaire -->
+    <div *ngIf="step === 2" class="step-panel">
+      
+      <div class="selected-role" *ngIf="getSelectedRoleInfo()">
+        {{ getSelectedRoleInfo()?.label }}
+      </div>
+
+      <div class="error-message" *ngIf="errorMsg">{{ errorMsg }}</div>
+      <div class="success-message" *ngIf="successMsg">{{ successMsg }}</div>
+
+      <form (ngSubmit)="onSubmit()" #registerForm="ngForm" autocomplete="off">
+
+        <!-- ======================================== -->
+        <!-- CHAMPS COMMUNS À TOUS LES RÔLES -->
+        <!-- ======================================== -->
+
+        <!-- ✅ SECTION EMAIL AVEC VALIDATION GMAIL -->
+        <div class="form-group">
+          <label for="email">Email *</label>
+          <input
+            id="email"
+            type="email"
+            [(ngModel)]="form.email"
+            name="email"
+            required
+            email
+            placeholder="you@gmail.com"
+            #email="ngModel"
+            (input)="onEmailInput()"
+            (blur)="validateEmail()"
+            autocomplete="off"
+          />
+          <div *ngIf="email.invalid && email.touched" class="field-error">
+            Valid email required
+          </div>
+          <div *ngIf="emailError && !email.invalid" class="field-error">
+            {{ emailError }}
+          </div>
+        </div>
+
+        <!-- Téléphone avec sélecteur de pays -->
+        <div class="form-group">
+          <label for="phone">Phone *</label>
+          <div class="phone-input-container">
+            <select 
+              [(ngModel)]="selectedCountryCode" 
+              name="countryCode" 
+              class="country-code-select"
+              (change)="updatePhoneNumber()"
+            >
+              <option *ngFor="let country of countryCodes" [value]="country.dialCode">
+                {{ country.flag }} {{ country.dialCode }}
+              </option>
+            </select>
+            <input
+              id="phone"
+              type="tel"
+              [(ngModel)]="phoneNumber"
+              name="phoneNumber"
+              required
+              placeholder="XX XXX XXX"
+              (input)="onPhoneInput($event)"
+              (blur)="validatePhoneNumber()"
+              autocomplete="off"
+              class="phone-number-input"
+            />
+          </div>
+          <div *ngIf="phoneError" class="field-error">{{ phoneError }}</div>
+          <small class="phone-hint">Example: {{ selectedCountryCode }} 12 345 678</small>
+        </div>
+
+        <!-- ======================================== -->
+        <!-- SECTION INVESTOR -->
+        <!-- ======================================== -->
+        <ng-container *ngIf="selectedRole === Role.INVESTOR">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="lastName">Last Name *</label>
+              <input
+                id="lastName"
+                type="text"
+                [(ngModel)]="form.nom"
+                name="nom"
+                required
+                placeholder="Your last name"
+                autocomplete="off"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="firstName">First Name *</label>
+              <input
+                id="firstName"
+                type="text"
+                [(ngModel)]="form.prenom"
+                name="prenom"
+                required
+                placeholder="Your first name"
+                autocomplete="off"
+              />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="nationality">Nationality</label>
+            <select
+              id="nationality"
+              [(ngModel)]="form.nationality"
+              name="nationality"
+              class="country-select"
+            >
+              <option value="">Select your nationality</option>
+              <option *ngFor="let nation of nationalities" [value]="nation.name">
+                {{ nation.name }}
+              </option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="company">Company Name *</label>
+            <input
+              id="company"
+              type="text"
+              [(ngModel)]="form.companyName"
+              name="companyName"
+              required
+              placeholder="Your company name"
+              autocomplete="off"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="originCountry">Country of Origin *</label>
+            <select
+              id="originCountry"
+              [(ngModel)]="form.paysOrigine"
+              name="paysOrigine"
+              required
+              class="country-select"
+            >
+              <option value="">Select country</option>
+              <option *ngFor="let country of countryCodes" [value]="country.name">
+                {{ country.flag }} {{ country.name }}
+              </option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="activitySector">Activity Sector *</label>
+            <select
+              id="activitySector"
+              [(ngModel)]="form.secteurActivite"
+              name="secteurActivite"
+              required
+              class="sector-select"
+            >
+              <option value="">Select activity sector</option>
+              <optgroup *ngFor="let category of getActivityCategories()" [label]="category">
+                <option *ngFor="let sector of getSectorsByCategory(category)" [value]="sector.value">
+                  {{ sector.label }}
+                </option>
+              </optgroup>
+            </select>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="website">Website</label>
+              <input
+                id="website"
+                type="url"
+                [(ngModel)]="form.siteWeb"
+                name="siteWeb"
+                placeholder="https://..."
+                autocomplete="off"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="linkedin">LinkedIn Profile</label>
+              <input
+                id="linkedin"
+                type="url"
+                [(ngModel)]="form.linkedinProfile"
+                name="linkedinProfile"
+                placeholder="https://linkedin.com/in/..."
+                autocomplete="off"
+              />
+            </div>
+          </div>
+        </ng-container>
+
+        <!-- ======================================== -->
+        <!-- SECTION TOURIST -->
+        <!-- ======================================== -->
+        <ng-container *ngIf="selectedRole === Role.TOURIST">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="lastNameTourist">Last Name *</label>
+              <input
+                id="lastNameTourist"
+                type="text"
+                [(ngModel)]="form.nom"
+                name="nom"
+                required
+                placeholder="Your last name"
+                autocomplete="off"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="firstNameTourist">First Name *</label>
+              <input
+                id="firstNameTourist"
+                type="text"
+                [(ngModel)]="form.prenom"
+                name="prenom"
+                required
+                placeholder="Your first name"
+                autocomplete="off"
+              />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="nationalityTourist">Nationality</label>
+            <select
+              id="nationalityTourist"
+              [(ngModel)]="form.nationality"
+              name="nationality"
+              class="country-select"
+            >
+              <option value="">Select your nationality</option>
+              <option *ngFor="let nation of nationalities" [value]="nation.name">
+                {{ nation.name }}
+              </option>
+            </select>
+          </div>
+        </ng-container>
+
+        <!-- ======================================== -->
+        <!-- SECTION ECONOMIC PARTNER (PARTNER) - SANS COMPANY NAME -->
+        <!-- ======================================== -->
+        <ng-container *ngIf="selectedRole === Role.PARTNER">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="lastNamePartner">Last Name *</label>
+              <input
+                id="lastNamePartner"
+                type="text"
+                [(ngModel)]="form.nom"
+                name="nom"
+                required
+                placeholder="Your last name"
+                autocomplete="off"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="firstNamePartner">First Name *</label>
+              <input
+                id="firstNamePartner"
+                type="text"
+                [(ngModel)]="form.prenom"
+                name="prenom"
+                required
+                placeholder="Your first name"
+                autocomplete="off"
+              />
+            </div>
+          </div>
+
+          <!-- ❌ CHAMP COMPANY NAME SUPPRIMÉ POUR LE PARTENAIRE ÉCONOMIQUE -->
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="originCountryPartner">Country of Origin *</label>
+              <select
+                id="originCountryPartner"
+                [(ngModel)]="form.paysOrigine"
+                name="paysOrigine"
+                required
+                class="country-select"
+              >
+                <option value="">Select country</option>
+                <option *ngFor="let country of countryCodes" [value]="country.name">
+                  {{ country.flag }} {{ country.name }}
+                </option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="businessSectorPartner">Business Sector *</label>
+              <select
+                id="businessSectorPartner"
+                [(ngModel)]="form.secteurActivite"
+                name="secteurActivite"
+                required
+                class="sector-select"
+              >
+                <option value="">Select business sector</option>
+                <optgroup *ngFor="let category of getActivityCategories()" [label]="category">
+                  <option *ngFor="let sector of getSectorsByCategory(category)" [value]="sector.value">
+                    {{ sector.label }}
+                  </option>
+                </optgroup>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="headquartersAddress">Headquarters Address</label>
+            <input
+              id="headquartersAddress"
+              type="text"
+              [(ngModel)]="form.adresse"
+              name="adresse"
+              placeholder="Full address"
+              autocomplete="off"
+            />
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="websitePartner">Website</label>
+              <input
+                id="websitePartner"
+                type="url"
+                [(ngModel)]="form.siteWeb"
+                name="siteWeb"
+                placeholder="https://..."
+                autocomplete="off"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="linkedinPartner">LinkedIn Profile</label>
+              <input
+                id="linkedinPartner"
+                type="url"
+                [(ngModel)]="form.linkedinProfile"
+                name="linkedinProfile"
+                placeholder="https://linkedin.com/in/..."
+                autocomplete="off"
+              />
+            </div>
+          </div>
+        </ng-container>
+
+        <!-- ======================================== -->
+        <!-- SECTION LOCAL PARTNER -->
+        <!-- ======================================== -->
+        <ng-container *ngIf="selectedRole === Role.LOCAL_PARTNER">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="lastNameLocal">Last Name *</label>
+              <input
+                id="lastNameLocal"
+                type="text"
+                [(ngModel)]="form.nom"
+                name="nom"
+                required
+                placeholder="Your last name"
+                autocomplete="off"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="firstNameLocal">First Name *</label>
+              <input
+                id="firstNameLocal"
+                type="text"
+                [(ngModel)]="form.prenom"
+                name="prenom"
+                required
+                placeholder="Your first name"
+                autocomplete="off"
+              />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="region">Region</label>
+              <select
+                id="region"
+                [(ngModel)]="form.region"
+                name="region"
+                class="region-select"
+              >
+                <option value="">Select a region</option>
+                <option *ngFor="let region of tunisianRegions" [value]="region.value">
+                  {{ region.label }}
+                </option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="addressLocal">Address</label>
+              <input
+                id="addressLocal"
+                type="text"
+                [(ngModel)]="form.adresse"
+                name="adresse"
+                placeholder="Full address"
+                autocomplete="off"
+              />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="activityDomainLocal">Activity Sector</label>
+            <select
+              id="activityDomainLocal"
+              [(ngModel)]="form.secteurActivite"
+              name="secteurActivite"
+              class="sector-select"
+            >
+              <option value="">Select activity sector</option>
+              <optgroup *ngFor="let category of getActivityCategories()" [label]="category">
+                <option *ngFor="let sector of getSectorsByCategory(category)" [value]="sector.value">
+                  {{ sector.label }}
+                </option>
+              </optgroup>
+            </select>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="businessRegNumber">Business Registration Number</label>
+              <input
+                id="businessRegNumber"
+                type="text"
+                [(ngModel)]="form.numeroRegistreCommerce"
+                name="numeroRegistreCommerce"
+                placeholder="Registration number"
+                autocomplete="off"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="taxNumber">Professional Tax Number</label>
+              <input
+                id="taxNumber"
+                type="text"
+                [(ngModel)]="form.taxeProfessionnelle"
+                name="taxeProfessionnelle"
+                placeholder="Tax number"
+                autocomplete="off"
+              />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="websiteLocal">Website</label>
+              <input
+                id="websiteLocal"
+                type="url"
+                [(ngModel)]="form.siteWeb"
+                name="siteWeb"
+                placeholder="https://..."
+                autocomplete="off"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="linkedinLocal">LinkedIn Profile</label>
+              <input
+                id="linkedinLocal"
+                type="url"
+                [(ngModel)]="form.linkedinProfile"
+                name="linkedinProfile"
+                placeholder="https://linkedin.com/in/..."
+                autocomplete="off"
+              />
+            </div>
+          </div>
+        </ng-container>
+
+        <!-- ======================================== -->
+        <!-- SECTION INTERNATIONAL COMPANY - SANS PHOTO -->
+        <!-- ======================================== -->
+        <ng-container *ngIf="selectedRole === Role.INTERNATIONAL_COMPANY">
+          <div class="form-group">
+            <label for="companyNameInt">Company Name *</label>
+            <input
+              id="companyNameInt"
+              type="text"
+              [(ngModel)]="form.companyName"
+              name="companyName"
+              required
+              placeholder="Company name"
+              autocomplete="off"
+            />
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="originCountryInt">Country of Origin *</label>
+              <select
+                id="originCountryInt"
+                [(ngModel)]="form.paysOrigine"
+                name="paysOrigine"
+                required
+                class="country-select"
+              >
+                <option value="">Select country</option>
+                <option *ngFor="let country of countryCodes" [value]="country.name">
+                  {{ country.flag }} {{ country.name }}
+                </option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="contactLastNameInt">Contact Last Name *</label>
+              <input
+                id="contactLastNameInt"
+                type="text"
+                [(ngModel)]="form.nom"
+                name="nom"
+                required
+                placeholder="Contact last name"
+                autocomplete="off"
+              />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="contactFirstNameInt">Contact First Name *</label>
+              <input
+                id="contactFirstNameInt"
+                type="text"
+                [(ngModel)]="form.prenom"
+                name="prenom"
+                required
+                placeholder="Contact first name"
+                autocomplete="off"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="siretInt">SIRET Number *</label>
+              <input
+                id="siretInt"
+                type="text"
+                [(ngModel)]="form.siret"
+                name="siret"
+                required
+                placeholder="SIRET number"
+                autocomplete="off"
+              />
+            </div>
+          </div>
+
+          <!-- ✅ SECTEUR D'ACTIVITÉ - MÊME QUE INVESTOR -->
+          <div class="form-group">
+            <label for="activitySectorInt">Activity Sector *</label>
+            <select
+              id="activitySectorInt"
+              [(ngModel)]="form.secteurActivite"
+              name="secteurActivite"
+              required
+              class="sector-select"
+            >
+              <option value="">Select activity sector</option>
+              <optgroup *ngFor="let category of getActivityCategories()" [label]="category">
+                <option *ngFor="let sector of getSectorsByCategory(category)" [value]="sector.value">
+                  {{ sector.label }}
+                </option>
+              </optgroup>
+            </select>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="websiteInt">Website</label>
+              <input
+                id="websiteInt"
+                type="url"
+                [(ngModel)]="form.siteWeb"
+                name="siteWeb"
+                placeholder="https://..."
+                autocomplete="off"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="linkedinInt">LinkedIn Profile</label>
+              <input
+                id="linkedinInt"
+                type="url"
+                [(ngModel)]="form.linkedinProfile"
+                name="linkedinProfile"
+                placeholder="https://linkedin.com/company/..."
+                autocomplete="off"
+              />
+            </div>
+          </div>
+          
+          <!-- ❌ CHAMP PHOTO SUPPRIMÉ -->
+        </ng-container>
+
+        <!-- ======================================== -->
+        <!-- SECTION ADMIN -->
+        <!-- ======================================== -->
+        <ng-container *ngIf="selectedRole === Role.ADMIN">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="lastNameAdmin">Last Name *</label>
+              <input
+                id="lastNameAdmin"
+                type="text"
+                [(ngModel)]="form.nom"
+                name="nom"
+                required
+                placeholder="Your last name"
+                autocomplete="off"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="firstNameAdmin">First Name *</label>
+              <input
+                id="firstNameAdmin"
+                type="text"
+                [(ngModel)]="form.prenom"
+                name="prenom"
+                required
+                placeholder="Your first name"
+                autocomplete="off"
+              />
+            </div>
+          </div>
+        </ng-container>
+
+        <!-- ======================================== -->
+        <!-- MOT DE PASSE (COMMUN À TOUS) -->
+        <!-- ======================================== -->
+        <div class="form-group">
+          <label for="password">Password *</label>
+          <div class="password-wrapper">
+            <input
+              id="password"
+              [type]="showPassword ? 'text' : 'password'"
+              [(ngModel)]="form.motDePasse"
+              name="motDePasse"
+              required
+              minlength="6"
+              placeholder="Minimum 6 characters"
+              #password="ngModel"
+              autocomplete="new-password"
+              class="password-input"
+            />
+            <button type="button" class="eye-btn" (click)="togglePassword()">
+              {{ showPassword ? 'Hide' : 'Show' }}
+            </button>
+          </div>
+          <div *ngIf="password.invalid && password.touched" class="field-error">
+            Minimum 6 characters required
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="confirmPassword">Confirm Password *</label>
+          <input
+            id="confirmPassword"
+            [type]="showPassword ? 'text' : 'password'"
+            [(ngModel)]="confirmPassword"
+            name="confirmPassword"
+            required
+            placeholder="Repeat your password"
+            autocomplete="new-password"
+            class="password-input"
+          />
+        </div>
+
+        <div *ngIf="form.motDePasse && confirmPassword && form.motDePasse !== confirmPassword" class="field-error">
+          Passwords do not match
+        </div>
+
+        <!-- ======================================== -->
+        <!-- BOUTONS D'ACTION -->
+        <!-- ======================================== -->
+        <div class="form-actions">
+          <button type="button" class="back-btn" (click)="goBack()" *ngIf="step === 2">
+            ← Back
+          </button>
+          <button type="submit" class="submit-btn" [disabled]="loading || registerForm.invalid || (form.motDePasse !== confirmPassword)">
+            <span *ngIf="!loading">Create account</span>
+            <span *ngIf="loading">Registering...</span>
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>

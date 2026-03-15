@@ -1,0 +1,260 @@
+<div class="chat-container">
+  <!-- Header -->
+  <div class="chat-header">
+    <div class="header-left">
+      <h2>
+        <span class="chat-icon">💬</span>
+        MultiRoleChat
+      </h2>
+       <button class="dashboard-btn" (click)="returnToDashboard()" title="Retour au dashboard">
+        <span class="dashboard-icon">🏠</span>
+        <span class="dashboard-text">Dashboard</span>
+      </button>
+    </div>
+    <div class="header-right">
+      <span class="user-badge">{{ userRole }}</span>
+      <span class="user-name">{{ userName }}</span>
+      <div class="notification-badge" *ngIf="unreadCount > 0">
+        {{ unreadCount }}
+      </div>
+    </div>
+  </div>
+
+  <div class="chat-main">
+    <!-- Liste des conversations avec bouton nouvelle conversation -->
+    <div class="conversations-list">
+      <div class="conversations-header">
+        <h3>Conversations</h3>
+        <button class="new-chat-btn" (click)="openNewChat()" title="Nouvelle conversation">
+          <span class="new-chat-icon">✚</span>
+        </button>
+      </div>
+      
+     <div class="conversation-items">
+  <div *ngIf="conversations.length === 0" class="no-conversations">
+    Aucune conversation
+  </div>
+  <div *ngFor="let conv of conversations" 
+       class="conversation-item"
+       [class.active]="selectedConversation === conv"
+       [class.has-unread]="getUnreadCount(conv) > 0"
+       (click)="selectConversation(conv)">
+    
+    <div class="conv-avatar">
+      {{ getConversationInitial(conv) }}
+      <!-- ✅ BADGE DE NOTIFICATION -->
+      <span class="unread-badge" *ngIf="getUnreadCount(conv) > 0">
+        {{ getUnreadCount(conv) > 99 ? '99+' : getUnreadCount(conv) }}
+      </span>
+    </div>
+    
+    <div class="conv-info">
+      <div class="conv-name">{{ getConversationName(conv) }}</div>
+      <div class="conv-role-badge" *ngIf="getConversationRole(conv)">
+        {{ getConversationRole(conv) }}
+      </div>
+      <div class="conv-last">{{ getConversationTime(conv) }}</div>
+    </div>
+    
+    <!-- ✅ COMPTEUR À CÔTÉ (optionnel) -->
+    <div class="unread-counter" *ngIf="getUnreadCount(conv) > 0">
+      <span class="unread-number">{{ getUnreadCount(conv) > 99 ? '99+' : getUnreadCount(conv) }}</span>
+    </div>
+  </div>
+</div>
+    </div>
+
+    <!-- Zone de chat -->
+    <div class="chat-area" *ngIf="selectedConversation; else noChat">
+      <div class="chat-area-header">
+        <span class="chat-with">Chat avec {{ getConversationName(selectedConversation) }}</span>
+        <span class="chat-role" *ngIf="getConversationRole(selectedConversation)">
+          ({{ getConversationRole(selectedConversation) }})
+        </span>
+      </div>
+
+      <!-- Messages -->
+      <div class="messages-container" #messagesContainer>
+        <div *ngIf="loading" class="loading">Chargement...</div>
+        
+        <div *ngIf="messages.length === 0 && !loading" class="no-messages">
+          Aucun message. Commencez la conversation !
+        </div>
+
+        <div *ngFor="let msg of messages; let i = index" class="message-wrapper">
+          <div class="message-date" *ngIf="shouldShowDate(msg, i)">
+            {{ formatDate(msg.sentAt) }}
+          </div>
+          
+          <div class="message" 
+               [class.my-message]="msg.senderId === getCurrentUserId()"
+               [class.their-message]="msg.senderId !== getCurrentUserId()">
+            
+            <div class="message-sender">{{ msg.senderName }}</div>
+            <div class="message-content">{{ msg.content }}</div>
+            
+            <!-- Pièces jointes - VERSION CORRIGÉE -->
+            <div class="attachments" *ngIf="msg.attachments && msg.attachments.length > 0">
+              <div *ngFor="let att of msg.attachments" 
+                   class="attachment"
+                   [class.image-attachment]="isImage(att.fileType)">
+                
+                <!-- APERÇU IMAGE -->
+                <div *ngIf="isImage(att.fileType)" class="image-preview-container" (click)="openImage(att)">
+                  <img [attr.data-attachment-id]="att.id"
+                       [src]="getImageUrl(att)" 
+                       (error)="onAttachmentError(att)"
+                       class="image-preview"
+                       alt="{{ att.fileName }}">
+                  <div class="image-overlay">
+                    <span class="zoom-icon">🔍</span>
+                  </div>
+                  <div class="image-info">
+                    <span class="file-name">{{ att.fileName }}</span>
+                    <span class="file-size">{{ formatFileSize(att.fileSize) }}</span>
+                  </div>
+                </div>
+                
+                <!-- FICHIER NON-IMAGE -->
+                <div *ngIf="!isImage(att.fileType)" class="file-attachment" (click)="downloadFile(att)">
+                  <span class="file-icon">{{ getFileIcon(att.fileType) }}</span>
+                  <span class="file-name">{{ att.fileName }}</span>
+                  <span class="file-size">({{ formatFileSize(att.fileSize) }})</span>
+                  <span class="download-icon">⬇️</span>
+                </div>
+                
+              </div>
+            </div>
+            
+            <div class="message-meta">
+              <span class="message-time">{{ formatTime(msg.sentAt) }}</span>
+              <span class="message-status" *ngIf="msg.senderId === getCurrentUserId()">
+                {{ msg.read ? '✓✓' : '✓' }}
+              </span>
+              <button class="delete-btn" 
+          *ngIf="msg.senderId === getCurrentUserId()"
+          [class.unread-delete]="!msg.read"
+          [class.read-delete]="msg.read"
+          [title]="msg.read ? 'Supprimer pour moi' : 'Supprimer définitivement'"
+          (click)="deleteMessage(msg)">
+    <span class="delete-icon">🗑️</span>
+    <span class="delete-badge" *ngIf="!msg.read">⚠️</span>
+  </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Zone de saisie -->
+      <div class="message-input">
+        <input type="text" 
+               [(ngModel)]="newMessage" 
+               (keyup.enter)="sendMessage()"
+               placeholder="Écrivez votre message...">
+        
+        <label class="file-upload">
+          <span class="upload-btn">📎</span>
+          <input type="file" (change)="onFileSelected($event)" multiple>
+        </label>
+        
+        <button class="send-btn" (click)="sendMessage()" 
+                [disabled]="!newMessage.trim() && selectedFiles.length === 0">
+          Envoyer
+        </button>
+      </div>
+
+      <!-- Fichiers sélectionnés -->
+      <div class="selected-files" *ngIf="selectedFiles.length > 0">
+        <div *ngFor="let file of selectedFiles" class="file-tag">
+          {{ file.name }}
+          <span (click)="selectedFiles = []">❌</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Template si aucune conversation sélectionnée -->
+    <ng-template #noChat>
+      <div class="no-chat-selected">
+        <span class="no-chat-icon">💬</span>
+        <h3>Sélectionnez une conversation</h3>
+        <p>Choisissez une conversation dans la liste de gauche</p>
+      </div>
+    </ng-template>
+  </div>
+</div>
+
+<!-- Modal pour afficher l'image en grand -->
+<div class="image-modal" *ngIf="selectedImage" (click)="closeImage()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <span class="close-modal" (click)="closeImage()">&times;</span>
+    <img [src]="selectedImage.url" class="modal-image" alt="{{ selectedImage.name }}">
+    <div class="modal-footer">
+      <span class="modal-filename">{{ selectedImage.name }}</span>
+      <span class="modal-size">{{ formatFileSize(selectedImage.attachment.fileSize) }}</span>
+      <button class="modal-download" (click)="downloadFile(selectedImage.attachment)">Télécharger</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de recherche d'utilisateurs -->
+<div class="user-search-modal" *ngIf="showUserSearch" (click)="closeUserSearch()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Nouvelle conversation</h3>
+      <button class="close-btn" (click)="closeUserSearch()">✕</button>
+    </div>
+    
+    <div class="search-box">
+      <input type="text" 
+             [(ngModel)]="searchQuery" 
+             (input)="onSearchInput()"
+             placeholder="Rechercher par email ou nom..."
+             class="search-input"
+             autofocus>
+    </div>
+
+    <!-- INDICATEUR DU TYPE DE LISTE -->
+    <div class="search-header-info" *ngIf="!searchLoading">
+      <span *ngIf="isAdmin" class="info-badge admin-badge">
+        👥 {{ searchResults.length }} utilisateur(s) trouvé(s)
+      </span>
+      <span *ngIf="!isAdmin" class="info-badge user-badge">
+        👤 {{ searchResults.length }} administrateur(s) trouvé(s)
+      </span>
+    </div>
+
+    <div class="search-results">
+      <div *ngIf="searchLoading" class="search-loading">
+        <span class="spinner"></span> Chargement...
+      </div>
+      
+      <div *ngIf="!searchLoading && searchResults.length === 0 && searchQuery.length >= 2" class="no-results">
+        <span *ngIf="isAdmin">Aucun utilisateur trouvé</span>
+        <span *ngIf="!isAdmin">Aucun administrateur trouvé</span>
+      </div>
+
+      <div *ngIf="!searchLoading && searchQuery.length < 2 && searchQuery.length > 0" class="search-hint">
+        Entrez au moins 2 caractères
+      </div>
+
+      <div *ngFor="let user of searchResults" 
+           class="user-item"
+           (click)="startConversationWithUser(user)">
+        <div class="user-avatar">
+          <img *ngIf="user.profilePhoto" [src]="user.profilePhoto" (error)="onImageError(user)" class="user-avatar-img">
+          <div *ngIf="!user.profilePhoto" class="user-avatar-fallback">
+            {{ getUserInitials(user) }}
+          </div>
+        </div>
+        <div class="user-details">
+          <div class="user-name">{{ user.displayName || user.firstName + ' ' + user.lastName || user.email }}</div>
+          <div class="user-email">{{ user.email }}</div>
+          <div class="user-role-badge" [class.admin-role]="user.role === 'ADMIN'">
+            {{ user.role }}
+          </div>
+        </div>
+        <button class="start-chat-btn" [title]="'Démarrer une conversation avec ' + (user.displayName || user.email)">💬</button>
+      </div>
+    </div>
+  </div>
+</div>

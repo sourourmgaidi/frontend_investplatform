@@ -1,0 +1,307 @@
+<!-- src/app/shared/favorites-collaboration/favorites-list/favorites-list.component.html -->
+<div class="favorites-layout">
+  <app-navbar></app-navbar>
+
+  <div class="favorites-content">
+    <!-- Header -->
+    <div class="favorites-header">
+      <div class="header-left">
+        <a (click)="goToDashboard()" class="back-link">
+          <span>←</span> Back to {{ getDashboardName() }} Dashboard
+        </a>
+        <h2>
+          <span class="title-icon">❤️</span>
+          My Collaboration Favorites
+        </h2>
+      </div>
+      <div class="header-right">
+        @if (favorites.length > 0) {
+          <span class="favorites-count">
+            {{ favorites.length }} item{{ favorites.length > 1 ? 's' : '' }}
+          </span>
+        }
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    @if (loading) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading your favorites...</p>
+      </div>
+    }
+
+    <!-- Error State -->
+    @if (error && !loading) {
+      <div class="error-state">
+        <span class="error-icon">⚠️</span>
+        <h3>An error occurred</h3>
+        <p>{{ error }}</p>
+        <div class="error-actions">
+          <button class="btn-retry" (click)="refreshFavorites()">
+            <span class="btn-icon">↻</span> Try Again
+          </button>
+          <button class="btn-back" (click)="goToDashboard()">
+            <span class="btn-icon">←</span> Back to Dashboard
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- Empty State -->
+    @if (!loading && !error && favorites.length === 0) {
+      <div class="empty-state">
+        <div class="empty-icon">❤️</div>
+        <h3>No favorites yet</h3>
+        <p>You haven't added any collaboration services to your favorites yet.</p>
+        <p class="empty-subtitle">Discover our services and add them to your favorites!</p>
+        <button class="btn-primary" (click)="goToServices()">
+          <span class="btn-icon">🔍</span> Browse Services
+        </button>
+      </div>
+    }
+
+    <!-- Favorites Grid -->
+    @if (!loading && !error && favorites.length > 0) {
+      <div class="favorites-grid">
+        @for (service of favorites; track service.id) {
+          <div class="favorite-card">
+            <!-- Status Badge -->
+            <div class="card-status" [class]="getStatusClass(service.status)">
+              @if (service.status === 'APPROVED') {
+                <span class="status-icon">✓</span>
+              } @else if (service.status === 'PENDING') {
+                <span class="status-icon">⏳</span>
+              } @else if (service.status === 'REJECTED') {
+                <span class="status-icon">✗</span>
+              }
+              {{ service.status }}
+            </div>
+
+            <!-- Card Header with Remove Button -->
+            <div class="card-header">
+              <h3 class="service-name">{{ service.name }}</h3>
+              <button 
+                class="btn-remove"
+                (click)="removeFavorite(service.id)"
+                [disabled]="isRemoving(service.id)"
+                [title]="'Remove from favorites'"
+              >
+                @if (!isRemoving(service.id)) {
+                  <span class="btn-remove-icon">✕</span>
+                } @else {
+                  <span class="loading-spinner-small"></span>
+                }
+              </button>
+            </div>
+
+            <!-- Description -->
+            @if (service.description) {
+              <p class="service-description">{{ service.description }}</p>
+            }
+
+            <!-- Provider Info -->
+            @if (service.provider) {
+              <div class="provider-info">
+                <span class="provider-icon">👤</span>
+                <span class="provider-name">
+                  {{ service.provider.firstName }} {{ service.provider.lastName }}
+                </span>
+              </div>
+            }
+
+            <!-- Service Details Grid -->
+            <div class="service-details">
+              <!-- Budget -->
+              @if (service.requestedBudget) {
+                <div class="detail-item">
+                  <span class="detail-label">Budget</span>
+                  <span class="detail-value price">{{ service.requestedBudget }} TND</span>
+                </div>
+              }
+
+              <!-- Region -->
+              @if (service.region) {
+                <div class="detail-item">
+                  <span class="detail-label">Region</span>
+                  <span class="detail-value">{{ service.region.name }}</span>
+                </div>
+              }
+
+              <!-- Collaboration Type -->
+              @if (service.collaborationType) {
+                <div class="detail-item">
+                  <span class="detail-label">Type</span>
+                  <span class="detail-value">{{ formatEnum(service.collaborationType) }}</span>
+                </div>
+              }
+
+              <!-- Activity Domain -->
+              @if (service.activityDomain) {
+                <div class="detail-item">
+                  <span class="detail-label">Domain</span>
+                  <span class="detail-value">{{ formatEnum(service.activityDomain) }}</span>
+                </div>
+              }
+
+              <!-- Availability -->
+              @if (service.availability) {
+                <div class="detail-item">
+                  <span class="detail-label">Availability</span>
+                  <span class="detail-value">{{ service.availability }}</span>
+                </div>
+              }
+
+              <!-- Contact Person -->
+              @if (service.contactPerson) {
+                <div class="detail-item">
+                  <span class="detail-label">Contact</span>
+                  <span class="detail-value">{{ service.contactPerson }}</span>
+                </div>
+              }
+
+              <!-- Duration -->
+              @if (service.collaborationDuration) {
+                <div class="detail-item">
+                  <span class="detail-label">Duration</span>
+                  <span class="detail-value">{{ service.collaborationDuration }}</span>
+                </div>
+              }
+
+              <!-- Address -->
+              @if (service.address) {
+                <div class="detail-item">
+                  <span class="detail-label">Address</span>
+                  <span class="detail-value">{{ service.address }}</span>
+                </div>
+              }
+
+              <!-- Publication Date -->
+              @if (service.publicationDate) {
+                <div class="detail-item">
+                  <span class="detail-label">Published</span>
+                  <span class="detail-value">{{ formatDate(service.publicationDate) }}</span>
+                </div>
+              }
+
+              <!-- Created Date -->
+              @if (service.createdAt) {
+                <div class="detail-item">
+                  <span class="detail-label">Created</span>
+                  <span class="detail-value">{{ formatDate(service.createdAt) }}</span>
+                </div>
+              }
+            </div>
+
+            <!-- Expected Benefits (Full Width) -->
+            @if (service.expectedBenefits) {
+              <div class="expected-benefits">
+                <span class="benefits-label">Expected Benefits</span>
+                <p class="benefits-text">{{ service.expectedBenefits }}</p>
+              </div>
+            }
+
+            <!-- Required Skills -->
+            @if (service.requiredSkills && service.requiredSkills.length > 0) {
+              <div class="skills-section">
+                <span class="skills-label">Required Skills</span>
+                <div class="skills-list">
+                  @for (skill of service.requiredSkills; track skill) {
+                    <span class="skill-tag">{{ skill }}</span>
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- ✅ SECTION DOCUMENTS (images et PDF) -->
+            @if (service.documents && service.documents.length > 0) {
+              <div class="documents-section">
+                <h4 class="documents-title">📎 Documents & Images</h4>
+                <div class="documents-grid">
+                  <!-- Images -->
+                  @for (doc of service.documents; track doc.id) {
+                    @if (doc.fileType?.startsWith('image/')) {
+                      <div class="document-item image-item">
+                        <img 
+                          [src]="getImageUrl(doc)" 
+                          class="document-thumbnail" 
+                          alt="{{ doc.fileName }}"
+                          (click)="openImage(doc)"
+                          loading="lazy"
+                        >
+                        <span class="document-name">{{ doc.fileName }}</span>
+                        @if (doc.fileSize) {
+                          <span class="document-size">{{ formatFileSize(doc.fileSize) }}</span>
+                        }
+                        @if (doc.isPrimary) {
+                          <span class="primary-badge-small">⭐</span>
+                        }
+                      </div>
+                    }
+                    
+                    <!-- PDF -->
+                    @if (doc.fileType === 'application/pdf') {
+                      <div class="document-item">
+                        <a href="javascript:void(0)" (click)="downloadFile(doc)" class="document-link">
+                          <span class="document-icon">📄</span>
+                          <span class="document-name">{{ doc.fileName }}</span>
+                          @if (doc.fileSize) {
+                            <span class="document-size">{{ formatFileSize(doc.fileSize) }}</span>
+                          }
+                        </a>
+                      </div>
+                    }
+                    
+                    <!-- Autres fichiers -->
+                    @if (!doc.fileType?.startsWith('image/') && doc.fileType !== 'application/pdf') {
+                      <div class="document-item">
+                        <a href="javascript:void(0)" (click)="downloadFile(doc)" class="document-link">
+                          <span class="document-icon">📎</span>
+                          <span class="document-name">{{ doc.fileName }}</span>
+                          @if (doc.fileSize) {
+                            <span class="document-size">{{ formatFileSize(doc.fileSize) }}</span>
+                          }
+                        </a>
+                      </div>
+                    }
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Footer -->
+    @if (!loading && !error && favorites.length > 0) {
+      <div class="favorites-footer">
+        <button class="btn-refresh" (click)="refreshFavorites()">
+          <span class="btn-icon">↻</span> Refresh List
+        </button>
+        <span class="footer-info">
+          Showing {{ favorites.length }} favorite item{{ favorites.length > 1 ? 's' : '' }}
+        </span>
+        <a routerLink="/partenaire-economique/dashboard" class="footer-dashboard-link">
+          ← Back to Dashboard
+        </a>
+      </div>
+    }
+  </div>
+</div>
+
+<!-- ✅ IMAGE MODAL (en dehors de la grille) -->
+@if (selectedImage) {
+  <div class="image-modal" (click)="closeImage()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <span class="close" (click)="closeImage()">&times;</span>
+      <img [src]="selectedImage.url" [alt]="selectedImage.name">
+      <div class="image-footer">
+        <p class="image-name">{{ selectedImage.name }}</p>
+        <button class="btn-download" (click)="downloadFile(selectedImage.doc)">
+          <span class="btn-icon">📥</span> Télécharger
+        </button>
+      </div>
+    </div>
+  </div>
+}

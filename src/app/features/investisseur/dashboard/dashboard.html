@@ -1,0 +1,47 @@
+<div class="dashboard-layout">
+  <app-navbar class="dashboard-navbar"></app-navbar>
+  <main class="dashboard-main">
+    <div class="dashboard-content">
+
+      <header class="dashboard-header" style="display:flex; justify-content:space-between; align-items:flex-start;">
+        <div>
+          <h1>Investor Dashboard</h1>
+          <p class="welcome-text">Welcome back! Here's your overview</p>
+        </div>
+        <app-notification-bell></app-notification-bell>
+      </header>
+
+      <div class="stats-grid">
+        <!-- Opportunities Card avec lien et compteur dynamique -->
+        <a routerLink="/investisseur/services" class="stat-card" style="text-decoration: none; display: block; cursor: pointer;">
+          <div class="stat-details">
+            <h3>Opportunities</h3>
+            <p class="stat-value">{{ opportunitiesCount }}</p>
+            <span class="stat-trend">{{ opportunitiesCount > 0 ? opportunitiesCount + ' available' : 'No opportunities' }}</span>
+          </div>
+        </a>
+      </div>
+
+      <!-- Lien vers les favoris (optionnel) -->
+      <div style="margin-top: 1rem; text-align: right;">
+        <a routerLink="/investisseur/favorites" style="color: #2563eb; text-decoration: none; font-size: 0.9rem;">
+          ⭐ View my favorites
+        </a>
+      </div>
+
+      <section class="recent-activity">
+        <h2>Recent Activity</h2>
+        <div class="activity-list">
+          <div class="activity-item">
+            <div class="activity-dot"></div>
+            <div class="activity-content">
+              <p>No recent activity</p>
+              <span class="activity-time">Start exploring opportunities</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>

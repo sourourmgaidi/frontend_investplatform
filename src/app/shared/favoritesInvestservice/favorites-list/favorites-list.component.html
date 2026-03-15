@@ -1,0 +1,321 @@
+<div class="favorites-container">
+  <!-- Header with back link to dashboard -->
+  <div class="favorites-header">
+    <div class="header-left">
+      <a (click)="goToDashboard()" class="back-link">
+        <span>←</span> Back to {{ getDashboardName() }}
+      </a>
+      <h2>My Favorites</h2>
+    </div>
+    <div class="header-right">
+      @if (favorites.length > 0) {
+        <span class="favorites-count">
+          {{ favorites.length }} item{{ favorites.length > 1 ? 's' : '' }}
+        </span>
+      }
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (loading) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading your favorites...</p>
+    </div>
+  }
+
+  <!-- Empty State -->
+  @if (!loading && favorites.length === 0) {
+    <div class="empty-state">
+      <h3>No favorites yet</h3>
+      <p>Discover our services and add them to your favorites</p>
+      <button class="btn-primary" (click)="goToServices()">
+        Browse Services
+      </button>
+    </div>
+  }
+
+  <!-- Favorites Grid -->
+  @if (!loading && favorites.length > 0) {
+    <div class="favorites-grid">
+      @for (service of favorites; track service.id) {
+        <div class="favorite-card">
+          <!-- Card Header -->
+          <div class="card-header">
+            <h3>{{ service.title || service.name }}</h3>
+            <button 
+              class="btn-remove"
+              (click)="removeFavorite(service.id)"
+              [disabled]="removingIds.has(service.id)"
+              [title]="'Remove from favorites'"
+            >
+              @if (!removingIds.has(service.id)) {
+                <span>Remove</span>
+              } @else {
+                <span class="loading-text">Removing...</span>
+              }
+            </button>
+          </div>
+
+          <!-- Description -->
+          <p class="service-description">{{ service.description }}</p>
+
+          <!-- ALL SERVICE DETAILS -->
+          <div class="service-details">
+            <!-- Basic Info -->
+            @if (service.price) {
+              <div class="detail-item">
+                <span class="detail-label">Price</span>
+                <span class="detail-value price">{{ formatPrice(service.price) }}</span>
+              </div>
+            }
+
+            @if (service.totalAmount) {
+              <div class="detail-item">
+                <span class="detail-label">Total Amount</span>
+                <span class="detail-value">{{ formatPrice(service.totalAmount) }}</span>
+              </div>
+            }
+
+            @if (service.minimumAmount) {
+              <div class="detail-item">
+                <span class="detail-label">Minimum</span>
+                <span class="detail-value">{{ formatPrice(service.minimumAmount) }}</span>
+              </div>
+            }
+
+            @if (service.region) {
+              <div class="detail-item">
+                <span class="detail-label">Region</span>
+                <span class="detail-value">{{ service.region.name }}</span>
+              </div>
+            }
+
+            @if (service.economicSector) {
+              <div class="detail-item">
+                <span class="detail-label">Sector</span>
+                <span class="detail-value">{{ service.economicSector.name }}</span>
+              </div>
+            }
+
+            @if (service.zone) {
+              <div class="detail-item">
+                <span class="detail-label">Zone</span>
+                <span class="detail-value">{{ service.zone }}</span>
+              </div>
+            }
+
+            @if (service.availability) {
+              <div class="detail-item">
+                <span class="detail-label">Availability</span>
+                <span class="detail-value">{{ service.availability }}</span>
+              </div>
+            }
+
+            @if (service.contactPerson) {
+              <div class="detail-item">
+                <span class="detail-label">Contact</span>
+                <span class="detail-value">{{ service.contactPerson }}</span>
+              </div>
+            }
+
+            @if (service.deadlineDate) {
+              <div class="detail-item">
+                <span class="detail-label">Deadline</span>
+                <span class="detail-value">{{ formatDate(service.deadlineDate) }}</span>
+              </div>
+            }
+
+            @if (service.projectDuration) {
+              <div class="detail-item">
+                <span class="detail-label">Duration</span>
+                <span class="detail-value">{{ service.projectDuration }}</span>
+              </div>
+            }
+
+            @if (service.status) {
+              <div class="detail-item">
+                <span class="detail-label">Status</span>
+                <span class="detail-value" [class]="getStatusClass(service.status)">
+                  {{ service.status }}
+                </span>
+              </div>
+            }
+
+            <!-- Collaboration specific fields -->
+            @if (service.collaborationType) {
+              <div class="detail-item">
+                <span class="detail-label">Collaboration Type</span>
+                <span class="detail-value">{{ service.collaborationType }}</span>
+              </div>
+            }
+
+            @if (service.activityDomain) {
+              <div class="detail-item">
+                <span class="detail-label">Activity Domain</span>
+                <span class="detail-value">{{ service.activityDomain }}</span>
+              </div>
+            }
+
+            @if (service.expectedBenefits) {
+              <div class="detail-item">
+                <span class="detail-label">Expected Benefits</span>
+                <span class="detail-value">{{ service.expectedBenefits }}</span>
+              </div>
+            }
+
+            <!-- Skills as tags -->
+            @if (service.requiredSkills && service.requiredSkills.length > 0) {
+              <div class="detail-item skills-item">
+                <span class="detail-label">Required Skills</span>
+                <div class="skills-tags">
+                  @for (skill of service.requiredSkills; track skill) {
+                    <span class="skill-tag">{{ skill }}</span>
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- Tourist specific fields -->
+            @if (service.category) {
+              <div class="detail-item">
+                <span class="detail-label">Category</span>
+                <span class="detail-value">{{ service.category }}</span>
+              </div>
+            }
+
+            @if (service.targetAudience) {
+              <div class="detail-item">
+                <span class="detail-label">Target Audience</span>
+                <span class="detail-value">{{ service.targetAudience }}</span>
+              </div>
+            }
+
+            @if (service.durationHours) {
+              <div class="detail-item">
+                <span class="detail-label">Duration (hours)</span>
+                <span class="detail-value">{{ service.durationHours }}</span>
+              </div>
+            }
+
+            @if (service.maxCapacity) {
+              <div class="detail-item">
+                <span class="detail-label">Max Capacity</span>
+                <span class="detail-value">{{ service.maxCapacity }}</span>
+              </div>
+            }
+
+            @if (service.groupPrice) {
+              <div class="detail-item">
+                <span class="detail-label">Group Price</span>
+                <span class="detail-value">{{ formatPrice(service.groupPrice) }}</span>
+              </div>
+            }
+
+            <!-- Included services as tags -->
+            @if (service.includedServices && service.includedServices.length > 0) {
+              <div class="detail-item services-item">
+                <span class="detail-label">Included Services</span>
+                <div class="services-tags">
+                  @for (item of service.includedServices; track item) {
+                    <span class="service-tag">{{ item }}</span>
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- Languages as tags -->
+            @if (service.availableLanguages && service.availableLanguages.length > 0) {
+              <div class="detail-item languages-item">
+                <span class="detail-label">Languages</span>
+                <div class="languages-tags">
+                  @for (lang of service.availableLanguages; track lang) {
+                    <span class="language-tag">{{ lang }}</span>
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- Documents -->
+            @if (service.attachedDocuments && service.attachedDocuments.length > 0) {
+              <div class="detail-item documents-item">
+                <span class="detail-label">Documents</span>
+                <div class="documents-list">
+                  @for (doc of service.attachedDocuments; track doc) {
+                    <span class="document-tag">📎 {{ doc }}</span>
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- ✅ AJOUT : SECTION POUR AFFICHER LES DOCUMENTS AVEC IMAGES -->
+            @if (service.documents && service.documents.length > 0) {
+              <div class="documents-section">
+                <h4 class="documents-title">📎 Documents & Images</h4>
+                <div class="documents-grid">
+                  <!-- Images -->
+                  @for (doc of service.images; track doc.id) {
+                    <div class="document-item image-item">
+                      <img 
+                        [src]="getImageUrl(doc)" 
+                        class="document-thumbnail" 
+                        alt="{{ doc.fileName }}"
+                        (click)="openImage(doc)"
+                        loading="lazy"
+                      >
+                      <span class="document-name">{{ doc.fileName }}</span>
+                      @if (doc.fileSize) {
+                        <span class="document-size">{{ formatFileSize(doc.fileSize) }}</span>
+                      }
+                    </div>
+                  }
+                  
+                  <!-- Autres documents (PDF, etc.) -->
+                  @for (doc of service.otherDocuments; track doc.id) {
+                    <div class="document-item">
+                      <a href="javascript:void(0)" (click)="downloadFile(doc)" class="document-link">
+                        <span class="document-icon">📄</span>
+                        <span class="document-name">{{ doc.fileName }}</span>
+                        @if (doc.fileSize) {
+                          <span class="document-size">{{ formatFileSize(doc.fileSize) }}</span>
+                        }
+                      </a>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Footer with refresh option -->
+  @if (!loading && favorites.length > 0) {
+    <div class="favorites-footer">
+      <button class="btn-refresh" (click)="refreshFavorites()">
+        Refresh List
+      </button>
+      <span class="footer-info">
+        Showing {{ favorites.length }} favorite item{{ favorites.length > 1 ? 's' : '' }}
+      </span>
+    </div>
+  }
+</div>
+
+<!-- ✅ AJOUT : IMAGE MODAL (en dehors de la grille) -->
+@if (selectedImage) {
+  <div class="image-modal" (click)="closeImage()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <span class="close" (click)="closeImage()">&times;</span>
+      <img [src]="selectedImage.url" [alt]="selectedImage.name">
+      <div class="image-footer">
+        <p class="image-name">{{ selectedImage.name }}</p>
+        <button class="btn-download" (click)="downloadFile(selectedImage.doc)">
+          <span class="btn-icon">📥</span> Télécharger
+        </button>
+      </div>
+    </div>
+  </div>
+}

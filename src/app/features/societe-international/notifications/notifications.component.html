@@ -1,0 +1,97 @@
+<div class="page-layout">
+  <app-navbar></app-navbar>
+  <div class="page-main">
+    <div class="page-content">
+
+      <!-- Header -->
+      <div class="page-header">
+        <div>
+          <a routerLink="/societe-international/dashboard" class="back-link">← Back to Dashboard</a>
+          <h1>My Notifications</h1>
+          <p class="subtitle">All your notifications in one place</p>
+        </div>
+        <div class="header-actions">
+          <button class="mark-all-btn" *ngIf="hasUnread" (click)="markAllAsRead()">
+            <span>✓</span> Mark all as read
+          </button>
+          <a routerLink="/societe-international/favorites" class="favorites-link">
+            <span>❤️</span> My Favorites
+          </a>
+        </div>
+      </div>
+
+      <!-- Loading -->
+      <div class="loading-state" *ngIf="loading">
+        <div class="spinner"></div>
+        <p>Loading notifications...</p>
+      </div>
+
+      <!-- Empty State -->
+      <div class="empty-state" *ngIf="!loading && notifications.length === 0">
+        <div class="empty-icon">🔔</div>
+        <h3>No notifications yet</h3>
+        <p>You'll see notifications here when new services are available or when services are updated</p>
+        <a routerLink="/societe-international/services" class="btn-primary">
+          Browse Services
+        </a>
+      </div>
+
+      <!-- Notifications List -->
+      <div class="notifications-list" *ngIf="!loading && notifications.length > 0">
+        <div 
+          *ngFor="let notif of notifications" 
+          class="notification-item" 
+          [class.unread]="!notif.read"
+          [class.approval]="notif.title.includes('Nouveau') || notif.title.includes('disponible')"
+          [class.update]="notif.title.includes('mis à jour') || notif.title.includes('updated')"
+          [class.deletion]="notif.title.includes('supprimé') || notif.title.includes('deleted')"
+        >
+          <div class="notification-icon">
+            <span *ngIf="notif.title.includes('Nouveau') || notif.title.includes('disponible')">🚀</span>
+            <span *ngIf="notif.title.includes('mis à jour') || notif.title.includes('updated')">🔄</span>
+            <span *ngIf="notif.title.includes('supprimé') || notif.title.includes('deleted')">🗑️</span>
+            <span *ngIf="!notif.title.includes('Nouveau') && !notif.title.includes('mis à jour') && !notif.title.includes('supprimé')">📢</span>
+          </div>
+          
+          <div class="notification-content">
+            <div class="notification-header">
+              <h3 class="notification-title">{{ notif.title }}</h3>
+              <span class="notification-date">{{ formatDate(notif.createdAt) }}</span>
+            </div>
+            
+            <p class="notification-message">{{ notif.message }}</p>
+            
+            <div class="notification-footer">
+              <span class="unread-badge" *ngIf="!notif.read">New</span>
+              
+              <button 
+                *ngIf="!notif.read" 
+                class="mark-read-btn" 
+                (click)="markAsRead(notif.id)"
+                [disabled]="processingIds.has(notif.id)"
+              >
+                <span *ngIf="!processingIds.has(notif.id)">✓ Mark as read</span>
+                <span *ngIf="processingIds.has(notif.id)">⏳ Processing...</span>
+              </button>
+              
+              <a 
+                *ngIf="notif.serviceId" 
+                [routerLink]="['/societe-international/services', notif.serviceType === 'COLLABORATION' ? 'collaboration' : 'investment', notif.serviceId]" 
+                class="view-service-link"
+              >
+                View Service →
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer with count -->
+      <div class="notifications-footer" *ngIf="!loading && notifications.length > 0">
+        <span class="total-count">Total: {{ notifications.length }} notification{{ notifications.length > 1 ? 's' : '' }}</span>
+        <span class="unread-count" *ngIf="unreadCount > 0">{{ unreadCount }} unread</span>
+      </div>
+
+    </div>
+  </div>
+</div>

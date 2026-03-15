@@ -1,0 +1,186 @@
+<div class="admin-container">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-title">
+      <h1>Demandes touristiques</h1>
+      <p class="subtitle">Gérez les demandes de modification et suppression des services touristiques</p>
+    </div>
+    <div class="header-stats">
+      <div class="stat-card">
+        <span class="stat-value">{{ stats.pending || 0 }}</span>
+        <span class="stat-label">En attente</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value">{{ stats.editRequests || 0 }}</span>
+        <span class="stat-label">Modifications</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value">{{ stats.deleteRequests || 0 }}</span>
+        <span class="stat-label">Suppressions</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div class="alert alert-success" *ngIf="success">
+    <span>✅</span> {{ success }}
+  </div>
+  <div class="alert alert-error" *ngIf="error">
+    <span>❌</span> {{ error }}
+  </div>
+
+  <!-- Filtres et recherche -->
+  <div class="filters-bar">
+    <div class="tabs">
+      <button class="tab-btn" [class.active]="activeTab === 'PENDING'" (click)="setTab('PENDING')">
+        En attente <span class="badge">{{ stats.pending || 0 }}</span>
+      </button>
+      <button class="tab-btn" [class.active]="activeTab === 'APPROVED'" (click)="setTab('APPROVED')">
+        Approuvées
+      </button>
+      <button class="tab-btn" [class.active]="activeTab === 'REJECTED'" (click)="setTab('REJECTED')">
+        Rejetées
+      </button>
+      <button class="tab-btn" [class.active]="activeTab === 'ALL'" (click)="setTab('ALL')">
+        Toutes
+      </button>
+    </div>
+
+    <div class="search-box">
+      <input
+        type="text"
+        [(ngModel)]="searchQuery"
+        (ngModelChange)="onSearch()"
+        placeholder="Rechercher par service, partenaire..."
+        class="search-input"
+      />
+      <span class="search-icon">🔍</span>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading-state">
+    <div class="spinner"></div>
+    <p>Chargement des demandes...</p>
+  </div>
+
+  <!-- Empty state -->
+  <div *ngIf="!loading && filteredRequests.length === 0" class="empty-state">
+    <div class="empty-icon">📋</div>
+    <h3>Aucune demande</h3>
+    <p>Aucune demande touristique {{ activeTab !== 'ALL' ? getStatusLabel(activeTab).toLowerCase() : '' }} à afficher</p>
+  </div>
+
+  <!-- Liste des demandes -->
+  <div class="requests-grid" *ngIf="!loading && filteredRequests.length > 0">
+    <div *ngFor="let request of filteredRequests" class="request-card" [class]="getStatusClass(request.status)">
+      
+      <!-- En-tête -->
+      <div class="card-header">
+        <div class="type-badge" [class.edit]="request.requestType === 'EDIT'" [class.delete]="request.requestType === 'DELETE'">
+          {{ getTypeIcon(request.requestType) }} {{ getTypeLabel(request.requestType) }}
+        </div>
+        <div class="status-badge" [class]="getStatusClass(request.status)">
+          {{ getStatusLabel(request.status) }}
+        </div>
+      </div>
+
+      <!-- Partenaire -->
+      <div class="partner-info">
+        <span class="partner-name">{{ request.partner?.firstName }} {{ request.partner?.lastName }}</span>
+        <span class="partner-email">{{ request.partner?.email }}</span>
+      </div>
+
+      <!-- Service -->
+      <div class="service-info">
+        <h3>{{ request.service?.name }}</h3>
+        <p class="service-desc">{{ request.service?.description | slice:0:100 }}...</p>
+      </div>
+
+      <!-- Raison -->
+      <div class="reason">
+        <strong>Raison :</strong>
+        <p>{{ request.reason | slice:0:120 }}...</p>
+      </div>
+
+      <!-- Modifications demandées (si EDIT) -->
+      <div class="changes" *ngIf="request.requestType === 'EDIT' && request.requestedChanges">
+        <strong>Modifications :</strong>
+        <p>{{ request.requestedChanges | slice:0:120 }}...</p>
+      </div>
+
+      <!-- Dates -->
+      <div class="dates">
+        <span class="date">Demande: {{ formatShortDate(request.requestDate) }}</span>
+        <span class="date" *ngIf="request.responseDate">Réponse: {{ formatShortDate(request.responseDate) }}</span>
+      </div>
+
+      <!-- Actions -->
+      <div class="card-actions">
+        <!-- Pour les demandes en attente -->
+        <ng-container *ngIf="request.status === 'PENDING'">
+          <button class="btn-approve" (click)="approveRequest(request.id, request.requestType)" [disabled]="processingId === request.id">
+            <span *ngIf="processingId !== request.id">✅ Approuver</span>
+            <span *ngIf="processingId === request.id" class="spinner-small"></span>
+          </button>
+          <button class="btn-reject" (click)="openRejectModal(request)" [disabled]="processingId === request.id">
+            ❌ Rejeter
+          </button>
+        </ng-container>
+
+        <!-- Pour les demandes traitées -->
+        <ng-container *ngIf="request.status !== 'PENDING'">
+          <button class="btn-view" [routerLink]="['/admin/requests', request.id]">
+            Voir détails
+          </button>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de rejet -->
+  <div class="modal-overlay" *ngIf="showRejectModal" (click)="closeModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Rejeter la demande</h3>
+        <button class="modal-close" (click)="closeModal()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="request-summary" *ngIf="selectedRequest">
+          <p>
+            <strong>Service :</strong> {{ selectedRequest.service?.name }}
+          </p>
+          <p>
+            <strong>Type :</strong> {{ getTypeLabel(selectedRequest.requestType) }}
+          </p>
+          <p>
+            <strong>Partenaire :</strong> {{ selectedRequest.partner?.firstName }} {{ selectedRequest.partner?.lastName }}
+          </p>
+        </div>
+
+        <div class="form-group">
+          <label for="rejectionReason">Raison du rejet <span class="required">*</span></label>
+          <textarea
+            id="rejectionReason"
+            [(ngModel)]="rejectionReason"
+            rows="4"
+            placeholder="Expliquez pourquoi vous rejetez cette demande..."
+            class="form-control"
+          ></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="closeModal()">Annuler</button>
+        <button 
+          class="btn-reject" 
+          (click)="rejectRequest()"
+          [disabled]="!rejectionReason.trim() || processingId === selectedRequest?.id"
+        >
+          {{ processingId === selectedRequest?.id ? 'Traitement...' : 'Rejeter la demande' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

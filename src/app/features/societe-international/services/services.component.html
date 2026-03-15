@@ -1,0 +1,115 @@
+<div class="page-layout">
+  <app-navbar></app-navbar>
+  <div class="page-main">
+    <div class="page-content">
+
+      <!-- Header -->
+      <div class="page-header">
+        <div>
+          <a routerLink="/societe-international/dashboard" class="back-link">← Back to Dashboard</a>
+          <h1>Available Services</h1>
+          <p class="subtitle">Collaboration and investment opportunities for your company</p>
+        </div>
+        <div class="header-actions">
+          <app-notification-bell></app-notification-bell>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab-btn" [class.active]="activeTab === 'collaboration'" (click)="switchTab('collaboration')">
+          <span class="tab-icon">🤝</span>
+          Collaboration ({{ collaborationServices.length }})
+        </button>
+        <button class="tab-btn" [class.active]="activeTab === 'investment'" (click)="switchTab('investment')">
+          <span class="tab-icon">📈</span>
+          Investment ({{ investmentServices.length }})
+        </button>
+      </div>
+
+      <!-- Search Bar -->
+      <div class="search-wrapper">
+        <div class="search-box">
+          <input
+            type="text"
+            [(ngModel)]="searchQuery"
+            (ngModelChange)="onSearch()"
+            [placeholder]="'Search ' + (activeTab === 'collaboration' ? 'collaboration' : 'investment') + ' services...'"
+            class="search-input"
+          />
+          <button class="clear-btn" *ngIf="searchQuery" (click)="clearSearch()">✕</button>
+        </div>
+      </div>
+
+      <!-- Messages -->
+      <div class="alert alert-success" *ngIf="success">
+        ✅ {{ success }}
+      </div>
+      <div class="alert alert-error" *ngIf="error">
+        ❌ {{ error }}
+      </div>
+
+      <!-- Loading -->
+      <div class="loading-state" *ngIf="loading">
+        <div class="spinner"></div>
+        <p>Loading services...</p>
+      </div>
+
+      <!-- Empty State -->
+      <div class="empty-state" *ngIf="!loading && filtered.length === 0">
+        <div class="empty-icon">{{ activeTab === 'collaboration' ? '🤝' : '📈' }}</div>
+        <h3>No {{ activeTab }} services available</h3>
+        <p>Check back later for new opportunities</p>
+      </div>
+
+      <!-- Services Grid -->
+      <div class="services-grid" *ngIf="!loading && filtered.length > 0">
+        <!-- Collaboration Card -->
+        <ng-container *ngIf="activeTab === 'collaboration'">
+          <div class="service-card collaboration-card" *ngFor="let s of filtered">
+            <div class="card-header">
+              <h3>{{ s.name }}</h3>
+              <button 
+                class="favorite-btn" 
+                [class.is-favorite]="s.isFavorite"
+                (click)="toggleFavorite(s)"
+                [disabled]="s.favoriteLoading"
+              >
+                <span class="heart">{{ s.isFavorite ? '❤️' : '🤍' }}</span>
+              </button>
+            </div>
+            <p class="description">{{ s.description || 'No description' }}</p>
+            <div class="details">
+              <span class="badge">💰 {{ s.requestedBudget }} TND</span>
+              <span class="badge">📍 {{ s.region?.name }}</span>
+              <span class="badge">🤝 {{ s.collaborationType }}</span>
+            </div>
+          </div>
+        </ng-container>
+
+        <!-- Investment Card -->
+        <ng-container *ngIf="activeTab === 'investment'">
+          <div class="service-card investment-card" *ngFor="let s of filtered">
+            <div class="card-header">
+              <h3>{{ s.title || s.name }}</h3>
+              <button 
+                class="favorite-btn" 
+                [class.is-favorite]="s.isFavorite"
+                (click)="toggleFavorite(s)"
+                [disabled]="s.favoriteLoading"
+              >
+                <span class="star">{{ s.isFavorite ? '⭐' : '☆' }}</span>
+              </button>
+            </div>
+            <p class="description">{{ s.description || 'No description' }}</p>
+            <div class="details">
+              <span class="badge">💰 {{ s.totalAmount }} TND</span>
+              <span class="badge">📍 {{ s.region?.name }}</span>
+              <span class="badge">📅 {{ s.deadlineDate | date }}</span>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,84 @@
+<div class="login-page">
+
+  <!-- Lien Home simple -->
+  <a routerLink="/" class="home-link">Home</a>
+
+  <div class="login-container">
+    
+    <div class="login-card">
+      
+      <div class="card-header">
+        <h2>Sign In</h2>
+        <p class="subtitle">Enter your credentials</p>
+      </div>
+
+      <div class="error-message" *ngIf="errorMsg">
+        {{ errorMsg }}
+      </div>
+
+      <!-- FORM -->
+      <form (ngSubmit)="onSubmit()" #loginForm="ngForm" class="login-form">
+
+        <!-- Champ Email -->
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input
+            id="email"
+            type="email"
+            [(ngModel)]="email"
+            name="email"
+            placeholder="your@email.com"
+            required
+            autocomplete="off"
+          />
+        </div>
+
+        <!-- Champ Password -->
+        <div class="form-group">
+          <label for="password">Password</label>
+          <div class="password-wrapper">
+            <input
+              id="password"
+              [type]="showPassword ? 'text' : 'password'"
+              [(ngModel)]="password"
+              name="password"
+              placeholder="Enter your password"
+              required
+              autocomplete="new-password"
+            />
+            <button 
+              type="button" 
+              class="password-toggle" 
+              (click)="togglePassword()"
+            >
+              {{ showPassword ? 'Hide' : 'Show' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- REMEMBER ME & FORGOT PASSWORD -->
+        <div class="form-options">
+          
+          
+          <a routerLink="/forgot-password" class="forgot-link">Forgot password?</a>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="submit-button" [disabled]="loading">
+          <span *ngIf="!loading">Sign In</span>
+          <span *ngIf="loading" class="loading-spinner">
+            <span class="spinner"></span>
+            Signing in...
+          </span>
+        </button>
+
+      </form>
+
+      <div class="login-footer">
+        <p>© 2025 InvestPlatform</p>
+      </div>
+
+    </div>
+  </div>
+
+</div>

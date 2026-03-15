@@ -1,0 +1,261 @@
+<div class="detail-container">
+  <!-- Header -->
+  <div class="header">
+    <button class="back-btn" (click)="goBack()">
+      ← Back
+    </button>
+    <h1>Request Details</h1>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading details...</p>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="error" class="error-state">
+    <div class="error-icon">❌</div>
+    <h3>Error</h3>
+    <p>{{ error }}</p>
+    <button class="btn-retry" (click)="loadRequest()">Try Again</button>
+  </div>
+
+  <!-- Detail Content -->
+  <div *ngIf="!loading && !error && request" class="detail-content">
+    
+    <!-- Status Banner -->
+    <div class="status-banner" [class]="getStatusClass(request.status)">
+      <div class="status-info">
+        <span class="status-label">Status:</span>
+        <span class="status-value">{{ getStatusLabel(request.status) }}</span>
+      </div>
+      <div class="request-id">#{{ request.id }}</div>
+    </div>
+
+    <!-- Main Info Card -->
+    <div class="info-card">
+      <h2>Request Information</h2>
+      
+      <div class="info-grid">
+        <div class="info-row">
+          <span class="info-label">Request Type:</span>
+          <span class="info-value" [class]="request.requestType.toLowerCase()">
+            {{ request.requestType === 'EDIT' ? 'Modification' : 'Deletion' }}
+          </span>
+        </div>
+
+        <div class="info-row">
+          <span class="info-label">Request Date:</span>
+          <span class="info-value">{{ formatDate(request.requestDate) }}</span>
+        </div>
+
+        <div class="info-row" *ngIf="request.responseDate">
+          <span class="info-label">Processing Date:</span>
+          <span class="info-value">{{ formatDate(request.responseDate) }}</span>
+        </div>
+
+        <div class="info-row" *ngIf="request.executionDate">
+          <span class="info-label">Expiration Date:</span>
+          <span class="info-value">{{ formatDate(request.executionDate) }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Partner Info Card -->
+    <div class="partner-card">
+      <h2>Partner Information</h2>
+      
+      <div class="partner-details" *ngIf="request.partner">
+        <div class="detail-row">
+          <span class="detail-label">Name:</span>
+          <span class="detail-value">{{ request.partner.firstName }} {{ request.partner.lastName }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Email:</span>
+          <span class="detail-value">{{ request.partner.email }}</span>
+        </div>
+        <div class="detail-row" *ngIf="request.partner.phone">
+          <span class="detail-label">Phone:</span>
+          <span class="detail-value">{{ request.partner.phone }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reason Card -->
+    <div class="reason-card">
+      <h2>Request Reason</h2>
+      <div class="reason-content">
+        <p>{{ request.reason }}</p>
+      </div>
+    </div>
+
+    <!-- Changes Card (for EDIT requests) -->
+    <div class="changes-card" *ngIf="request.requestType === 'EDIT' && request.requestedChanges">
+      <h2>Requested Changes</h2>
+      <div class="changes-content">
+        <p>{{ request.requestedChanges }}</p>
+      </div>
+    </div>
+
+    <!-- Service Details Card -->
+    <div class="service-card" *ngIf="request.service">
+      <h2>Service Details</h2>
+      
+      <div class="service-header">
+        <h3>{{ request.service.title || request.service.name }}</h3>
+        <span class="service-status" [class]="request.service.status?.toLowerCase()">
+          {{ request.service.status }}
+        </span>
+      </div>
+
+      <div class="service-details">
+        <div class="detail-row" *ngIf="request.service.description">
+          <span class="detail-label">Description:</span>
+          <span class="detail-value">{{ request.service.description }}</span>
+        </div>
+
+        <div class="detail-row" *ngIf="request.service.price">
+          <span class="detail-label">Price:</span>
+          <span class="detail-value price">{{ formatPrice(request.service.price) }}</span>
+        </div>
+
+        <div class="detail-row" *ngIf="request.service.region">
+          <span class="detail-label">Region:</span>
+          <span class="detail-value">{{ request.service.region.name }}</span>
+        </div>
+
+        <div class="detail-row" *ngIf="request.service.economicSector">
+          <span class="detail-label">Sector:</span>
+          <span class="detail-value">{{ request.service.economicSector.name }}</span>
+        </div>
+
+        <div class="detail-row" *ngIf="request.service.contactPerson">
+          <span class="detail-label">Contact:</span>
+          <span class="detail-value">{{ request.service.contactPerson }}</span>
+        </div>
+
+        <div class="detail-row" *ngIf="request.service.availability">
+          <span class="detail-label">Availability:</span>
+          <span class="detail-value">{{ request.service.availability }}</span>
+        </div>
+
+        <div class="detail-row" *ngIf="request.service.zone">
+          <span class="detail-label">Zone:</span>
+          <span class="detail-value">{{ request.service.zone }}</span>
+        </div>
+
+        <div class="detail-row" *ngIf="request.service.totalAmount">
+          <span class="detail-label">Total Amount:</span>
+          <span class="detail-value">{{ formatPrice(request.service.totalAmount) }}</span>
+        </div>
+
+        <div class="detail-row" *ngIf="request.service.minimumAmount">
+          <span class="detail-label">Minimum Amount:</span>
+          <span class="detail-value">{{ formatPrice(request.service.minimumAmount) }}</span>
+        </div>
+
+        <div class="detail-row" *ngIf="request.service.deadlineDate">
+          <span class="detail-label">Deadline:</span>
+          <span class="detail-value">{{ request.service.deadlineDate }}</span>
+        </div>
+
+        <div class="detail-row" *ngIf="request.service.projectDuration">
+          <span class="detail-label">Duration:</span>
+          <span class="detail-value">{{ request.service.projectDuration }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin Actions (only for PENDING requests) -->
+    <div class="admin-actions" *ngIf="request.status === 'PENDING'">
+      <button class="btn-approve" (click)="approveRequest()">
+        ✅ Approve Request
+      </button>
+      <!-- New button (without reason) -->
+      <button class="btn-reject-simple" (click)="openSimpleRejectModal()">
+        ❌ Reject
+      </button>
+    </div>
+
+    <div class="actions" *ngIf="request.status !== 'PENDING'">
+      <button class="btn-back" (click)="goBack()">
+        Back to List
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Reject Modal (with reason) -->
+<div class="modal-overlay" *ngIf="showRejectModal" (click)="closeRejectModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Reject Request</h3>
+      <button class="modal-close" (click)="closeRejectModal()">✕</button>
+    </div>
+    
+    <div class="modal-body">
+      <p class="modal-service" *ngIf="request">
+        Service: <strong>{{ request.service?.title || request.service?.name }}</strong>
+      </p>
+      <p class="modal-partner" *ngIf="request">
+        Partner: {{ request.partner?.firstName }} {{ request.partner?.lastName }}
+      </p>
+      
+      <div class="form-group">
+        <label for="rejectReason">Rejection reason <span class="required">*</span></label>
+        <textarea
+          id="rejectReason"
+          [(ngModel)]="rejectReason"
+          rows="4"
+          placeholder="Explain why you are rejecting this request..."
+          class="form-control"
+        ></textarea>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="closeRejectModal()">Cancel</button>
+      <button 
+        class="btn-confirm-reject" 
+        (click)="rejectRequest()" 
+        [disabled]="!rejectReason.trim()"
+      >
+        Confirm Rejection
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- NEW MODAL - Reject without reason -->
+<div class="modal-overlay" *ngIf="showSimpleRejectModal" (click)="closeSimpleRejectModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Confirm Rejection</h3>
+      <button class="modal-close" (click)="closeSimpleRejectModal()">✕</button>
+    </div>
+    
+    <div class="modal-body">
+      <p class="modal-service" *ngIf="request">
+        Service: <strong>{{ request.service?.title || request.service?.name }}</strong>
+      </p>
+      <p class="modal-partner" *ngIf="request">
+        Partner: {{ request.partner?.firstName }} {{ request.partner?.lastName }}
+      </p>
+      
+      <p class="confirm-message">
+        Are you sure you want to reject this request without providing a reason?
+      </p>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="closeSimpleRejectModal()">Cancel</button>
+      <button 
+        class="btn-confirm-reject" 
+        (click)="confirmRejectWithoutReason()"
+      >
+        Confirm Rejection
+      </button>
+    </div>
+  </div>
+</div>

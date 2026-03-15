@@ -1,0 +1,45 @@
+<div class="dashboard-container">
+  <app-navbar></app-navbar>
+  <main class="dashboard-content">
+    
+    <!-- Header avec Notification Bell -->
+    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+      <div>
+        <h1>International Company Dashboard</h1>
+        <p>Manage your collaborations and investments.</p>
+      </div>
+      <app-notification-bell></app-notification-bell>
+    </div>
+
+    <!-- Stats Cards avec méthodes de navigation -->
+    <div class="stats-cards">
+      <!-- Collaboration Services Card -->
+      <div class="stat-card" (click)="navigateToCollaborationServices()" style="cursor: pointer;">
+        <h3>Collaboration Services</h3>
+        <p class="stat-number">{{ collaborationCount }}</p>
+      </div>
+
+      <!-- Investment Services Card -->
+      <div class="stat-card" (click)="navigateToInvestmentServices()" style="cursor: pointer;">
+        <h3>Investment Services</h3>
+        <p class="stat-number">{{ investmentCount }}</p>
+      </div>
+
+      <!-- Unread Messages Card -->
+      <div class="stat-card">
+        <h3>Unread Messages</h3>
+        <p class="stat-number">{{ unreadCount }}</p>
+      </div>
+    </div>
+
+    <!-- Favorites Section -->
+    <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+      <div class="favorites-link" (click)="navigateToInvestmentFavorites()" *ngIf="investmentFavCount > 0" style="cursor: pointer;">
+        ⭐ Investment Favorites ({{ investmentFavCount }})
+      </div>
+      <div class="favorites-link" (click)="navigateToCollaborationFavorites()" *ngIf="collaborationFavCount > 0" style="cursor: pointer;">
+        ❤️ Collaboration Favorites ({{ collaborationFavCount }})
+      </div>
+    </div>
+  </main>
+</div>

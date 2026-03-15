@@ -1,0 +1,465 @@
+<div class="admin-requests-container">
+  <!-- Header with dashboard link -->
+  <div class="header">
+    <div class="header-left">
+      <a routerLink="/admin/dashboard" class="back-link">← Back to Dashboard</a>
+      <h1>Request Management</h1>
+      <p class="subtitle">Approve or reject requests from local partners</p>
+    </div>
+    <div class="header-right">
+      <div class="stats-badge" *ngIf="totalPending > 0">
+        {{ totalPending }} pending request(s)
+      </div>
+      <a routerLink="/admin/dashboard" class="dashboard-link">
+        <span>📊</span> Dashboard
+      </a>
+    </div>
+  </div>
+
+  <!-- Alert Messages -->
+  <div class="alert success-alert" *ngIf="successMsg">
+    <span>✓ {{ successMsg }}</span>
+    <button (click)="successMsg = ''">✕</button>
+  </div>
+  <div class="alert error-alert" *ngIf="errorMsg">
+    <span>⚠ {{ errorMsg }}</span>
+    <button (click)="errorMsg = ''">✕</button>
+  </div>
+
+  <!-- Tabs - WITH TOURIST -->
+  <div class="tabs">
+    <button 
+      class="tab-btn" 
+      [class.active]="activeTab === 'investment'"
+      (click)="setTab('investment')">
+      📈 Investment Requests
+      <span class="tab-badge" *ngIf="investmentPendingCount > 0">{{ investmentPendingCount }}</span>
+    </button>
+    <button 
+      class="tab-btn" 
+      [class.active]="activeTab === 'collaboration'"
+      (click)="setTab('collaboration')">
+      🤝 Collaboration Requests
+      <span class="tab-badge" *ngIf="collaborationPendingCount > 0">{{ collaborationPendingCount }}</span>
+    </button>
+    <!-- ✅ TOURIST TAB -->
+    <button 
+      class="tab-btn" 
+      [class.active]="activeTab === 'tourist'"
+      (click)="setTab('tourist')">
+      🌍 Tourist Requests
+      <span class="tab-badge" *ngIf="touristPendingCount > 0">{{ touristPendingCount }}</span>
+    </button>
+  </div>
+
+  <!-- Stats Cards - WITH TOURIST -->
+  <div class="stats-cards">
+    <div class="stat-card" *ngIf="activeTab === 'investment'">
+      <div class="stat-value">{{ investmentTotal }}</div>
+      <div class="stat-label">Total Requests</div>
+      <div class="stat-details">
+        <span class="stat-pending">⏳ {{ investmentPendingCount }} pending</span>
+        <span class="stat-approved">✅ {{ investmentApprovedCount }} approved</span>
+        <span class="stat-rejected">❌ {{ investmentRejectedCount }} rejected</span>
+      </div>
+    </div>
+    <div class="stat-card" *ngIf="activeTab === 'collaboration'">
+      <div class="stat-value">{{ collaborationTotal }}</div>
+      <div class="stat-label">Total Requests</div>
+      <div class="stat-details">
+        <span class="stat-pending">⏳ {{ collaborationPendingCount }} pending</span>
+        <span class="stat-approved">✅ {{ collaborationApprovedCount }} approved</span>
+        <span class="stat-rejected">❌ {{ collaborationRejectedCount }} rejected</span>
+      </div>
+    </div>
+    <!-- ✅ TOURIST STATS -->
+    <div class="stat-card" *ngIf="activeTab === 'tourist'">
+      <div class="stat-value">{{ touristTotal }}</div>
+      <div class="stat-label">Total Requests</div>
+      <div class="stat-details">
+        <span class="stat-pending">⏳ {{ touristPendingCount }} pending</span>
+        <span class="stat-approved">✅ {{ touristApprovedCount }} approved</span>
+        <span class="stat-rejected">❌ {{ touristRejectedCount }} rejected</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters - WITH TOURIST -->
+  <div class="filters">
+    <div class="filter-group" *ngIf="activeTab === 'investment'">
+      <label>Type:</label>
+      <select [(ngModel)]="investmentFilterType" (change)="applyInvestmentFilters()">
+        <option value="all">All types</option>
+        <option value="EDIT">Modification</option>
+        <option value="DELETE">Deletion</option>
+      </select>
+    </div>
+
+    <div class="filter-group" *ngIf="activeTab === 'collaboration'">
+      <label>Type:</label>
+      <select [(ngModel)]="collaborationFilterType" (change)="applyCollaborationFilters()">
+        <option value="all">All types</option>
+        <option value="EDIT">Modification</option>
+        <option value="DELETE">Deletion</option>
+      </select>
+    </div>
+
+    <!-- ✅ TOURIST TYPE FILTER -->
+    <div class="filter-group" *ngIf="activeTab === 'tourist'">
+      <label>Type:</label>
+      <select [(ngModel)]="touristFilterType" (change)="applyTouristFilters()">
+        <option value="all">All types</option>
+        <option value="EDIT">Modification</option>
+        <option value="DELETE">Deletion</option>
+      </select>
+    </div>
+
+    <div class="filter-group" *ngIf="activeTab === 'investment'">
+      <label>Status:</label>
+      <select [(ngModel)]="investmentFilterStatus" (change)="applyInvestmentFilters()">
+        <option value="all">All statuses</option>
+        <option value="PENDING">Pending</option>
+        <option value="APPROVED">Approved</option>
+        <option value="REJECTED">Rejected</option>
+      </select>
+    </div>
+
+    <div class="filter-group" *ngIf="activeTab === 'collaboration'">
+      <label>Status:</label>
+      <select [(ngModel)]="collaborationFilterStatus" (change)="applyCollaborationFilters()">
+        <option value="all">All statuses</option>
+        <option value="PENDING">Pending</option>
+        <option value="APPROVED">Approved</option>
+        <option value="REJECTED">Rejected</option>
+      </select>
+    </div>
+
+    <!-- ✅ TOURIST STATUS FILTER -->
+    <div class="filter-group" *ngIf="activeTab === 'tourist'">
+      <label>Status:</label>
+      <select [(ngModel)]="touristFilterStatus" (change)="applyTouristFilters()">
+        <option value="all">All statuses</option>
+        <option value="PENDING">Pending</option>
+        <option value="APPROVED">Approved</option>
+        <option value="REJECTED">Rejected</option>
+      </select>
+    </div>
+
+    <button class="btn-refresh" (click)="refreshRequests()" [disabled]="loading">
+      🔄 Refresh
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading requests...</p>
+  </div>
+
+  <!-- Empty State - Investment -->
+  <div *ngIf="!loading && activeTab === 'investment' && filteredInvestmentRequests.length === 0" class="empty-state">
+    <div class="empty-icon">📈</div>
+    <h3>No investment requests found</h3>
+    <p>No requests match the selected filters</p>
+    <a routerLink="/admin/dashboard" class="btn-dashboard">← Back to Dashboard</a>
+  </div>
+
+  <!-- Empty State - Collaboration -->
+  <div *ngIf="!loading && activeTab === 'collaboration' && filteredCollaborationRequests.length === 0" class="empty-state">
+    <div class="empty-icon">🤝</div>
+    <h3>No collaboration requests found</h3>
+    <p>No requests match the selected filters</p>
+    <a routerLink="/admin/dashboard" class="btn-dashboard">← Back to Dashboard</a>
+  </div>
+
+  <!-- ✅ Empty State - Tourist -->
+  <div *ngIf="!loading && activeTab === 'tourist' && filteredTouristRequests.length === 0" class="empty-state">
+    <div class="empty-icon">🌍</div>
+    <h3>No tourist requests found</h3>
+    <p>No requests match the selected filters</p>
+    <a routerLink="/admin/dashboard" class="btn-dashboard">← Back to Dashboard</a>
+  </div>
+
+  <!-- Investment Requests List -->
+  <div class="requests-list" *ngIf="!loading && activeTab === 'investment' && filteredInvestmentRequests.length > 0">
+    <div *ngFor="let req of filteredInvestmentRequests" class="request-card" [class]="'status-' + (req.status || 'pending').toLowerCase()">
+      <!-- Header -->
+      <div class="request-header">
+        <div class="request-info">
+          <span class="type-badge" [class.edit]="req.requestType === 'EDIT'" [class.delete]="req.requestType === 'DELETE'">
+            {{ req.requestType === 'EDIT' ? '✏️ Modification' : '🗑️ Deletion' }}
+          </span>
+          <span class="status-badge" [class]="'status-' + (req.status || 'pending').toLowerCase()">
+            {{ getStatusLabel(req.status) }}
+          </span>
+          <span class="request-date">{{ formatDate(req.requestDate) }}</span>
+        </div>
+      </div>
+
+      <!-- Body -->
+      <div class="request-body">
+        <div class="service-info">
+          <h3>{{ req.service?.title || req.service?.name || 'Unknown service' }}</h3>
+          <p class="partner-name">
+            Partner: {{ req.partner?.firstName || '' }} {{ req.partner?.lastName || '' }}
+          </p>
+          <p class="partner-email">{{ req.partner?.email || '' }}</p>
+        </div>
+
+        <div class="reason-box">
+          <strong>Reason:</strong>
+          <p>{{ req.reason || 'No reason provided' }}</p>
+        </div>
+
+        <div class="changes-box" *ngIf="req.requestedChanges">
+          <strong>Requested changes:</strong>
+          <p>{{ req.requestedChanges }}</p>
+        </div>
+
+        <div class="service-details" *ngIf="req.service">
+          <div class="detail-row" *ngIf="req.service.totalAmount">
+            <span class="label">Total amount:</span>
+            <span class="value">{{ formatPrice(req.service.totalAmount) }}</span>
+          </div>
+          <div class="detail-row" *ngIf="req.service.region">
+            <span class="label">Region:</span>
+            <span class="value">{{ req.service.region.name }}</span>
+          </div>
+          <div class="detail-row" *ngIf="req.service.economicSector">
+            <span class="label">Sector:</span>
+            <span class="value">{{ req.service.economicSector.name }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="request-footer">
+        <div class="response-info" *ngIf="req.status !== 'PENDING'">
+          <span class="response-date">
+            Processed on {{ formatDate(req.responseDate) }}
+          </span>
+        </div>
+
+        <div class="request-actions" *ngIf="req.status === 'PENDING'">
+          <button class="btn-approve" (click)="approveInvestmentRequest(req)" [disabled]="processingId === req.id">
+            <span *ngIf="processingId !== req.id">✅ Approve</span>
+            <span *ngIf="processingId === req.id" class="loading-dots">...</span>
+          </button>
+          <button class="btn-reject" (click)="rejectRequestWithoutReason(req, 'investment')" [disabled]="processingId === req.id">
+            <span *ngIf="processingId !== req.id">❌ Reject</span>
+            <span *ngIf="processingId === req.id" class="loading-dots">...</span>
+          </button>
+        </div>
+
+        <button class="btn-view" [routerLink]="['/admin/requests/investment', req.id]">
+          View details
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Collaboration Requests List -->
+  <div class="requests-list" *ngIf="!loading && activeTab === 'collaboration' && filteredCollaborationRequests.length > 0">
+    <div *ngFor="let req of filteredCollaborationRequests" class="request-card" [class]="'status-' + (req.status || 'pending').toLowerCase()">
+      <!-- Header -->
+      <div class="request-header">
+        <div class="request-info">
+          <span class="type-badge" [class.edit]="req.requestType === 'EDIT'" [class.delete]="req.requestType === 'DELETE'">
+            {{ req.requestType === 'EDIT' ? '✏️ Modification' : '🗑️ Deletion' }}
+          </span>
+          <span class="status-badge" [class]="'status-' + (req.status || 'pending').toLowerCase()">
+            {{ getStatusLabel(req.status) }}
+          </span>
+          <span class="request-date">{{ formatDate(req.requestDate) }}</span>
+        </div>
+      </div>
+
+      <!-- Body -->
+      <div class="request-body">
+        <div class="service-info">
+          <h3>{{ req.service?.name || 'Unknown service' }}</h3>
+          <p class="partner-name">
+            Partner: {{ req.partner?.firstName || '' }} {{ req.partner?.lastName || '' }}
+          </p>
+          <p class="partner-email">{{ req.partner?.email || '' }}</p>
+        </div>
+
+        <div class="reason-box">
+          <strong>Reason:</strong>
+          <p>{{ req.reason || 'No reason provided' }}</p>
+        </div>
+
+        <div class="changes-box" *ngIf="req.requestedChanges">
+          <strong>Requested changes:</strong>
+          <p>{{ req.requestedChanges }}</p>
+        </div>
+
+        <div class="service-details" *ngIf="req.service">
+          <div class="detail-row" *ngIf="req.service.requestedBudget">
+            <span class="label">Budget:</span>
+            <span class="value">{{ formatPrice(req.service.requestedBudget) }}</span>
+          </div>
+          <div class="detail-row" *ngIf="req.service.region">
+            <span class="label">Region:</span>
+            <span class="value">{{ req.service.region.name }}</span>
+          </div>
+          <div class="detail-row" *ngIf="req.service.activityDomain">
+            <span class="label">Activity:</span>
+            <span class="value">{{ req.service.activityDomain }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="request-footer">
+        <div class="response-info" *ngIf="req.status !== 'PENDING'">
+          <span class="response-date">
+            Processed on {{ formatDate(req.responseDate) }}
+          </span>
+        </div>
+
+        <div class="request-actions" *ngIf="req.status === 'PENDING'">
+          <button class="btn-approve" (click)="approveCollaborationRequest(req)" [disabled]="processingId === req.id">
+            <span *ngIf="processingId !== req.id">✅ Approve</span>
+            <span *ngIf="processingId === req.id" class="loading-dots">...</span>
+          </button>
+          <button class="btn-reject" (click)="rejectRequestWithoutReason(req, 'collaboration')" [disabled]="processingId === req.id">
+            <span *ngIf="processingId !== req.id">❌ Reject</span>
+            <span *ngIf="processingId === req.id" class="loading-dots">...</span>
+          </button>
+        </div>
+
+        <button class="btn-view" [routerLink]="['/admin/requests/collaboration', req.id]">
+          View details
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ✅ TOURIST REQUESTS LIST -->
+  <div class="requests-list" *ngIf="!loading && activeTab === 'tourist' && filteredTouristRequests.length > 0">
+    <div *ngFor="let req of filteredTouristRequests" class="request-card" [class]="'status-' + (req.status || 'pending').toLowerCase()">
+      <!-- Header -->
+      <div class="request-header">
+        <div class="request-info">
+          <span class="type-badge" [class.edit]="req.requestType === 'EDIT'" [class.delete]="req.requestType === 'DELETE'">
+            {{ req.requestType === 'EDIT' ? '✏️ Modification' : '🗑️ Deletion' }}
+          </span>
+          <span class="status-badge" [class]="'status-' + (req.status || 'pending').toLowerCase()">
+            {{ getStatusLabel(req.status) }}
+          </span>
+          <span class="request-date">{{ formatDate(req.requestDate) }}</span>
+        </div>
+      </div>
+
+      <!-- Body -->
+      <div class="request-body">
+        <div class="service-info">
+          <h3>{{ req.service?.name || 'Unknown service' }}</h3>
+          <p class="partner-name">
+            Partner: {{ req.partner?.firstName || '' }} {{ req.partner?.lastName || '' }}
+          </p>
+          <p class="partner-email">{{ req.partner?.email || '' }}</p>
+        </div>
+
+        <div class="reason-box">
+          <strong>Reason:</strong>
+          <p>{{ req.reason || 'No reason provided' }}</p>
+        </div>
+
+        <div class="changes-box" *ngIf="req.requestedChanges">
+          <strong>Requested changes:</strong>
+          <p>{{ req.requestedChanges }}</p>
+        </div>
+
+        <div class="service-details" *ngIf="req.service">
+          <div class="detail-row" *ngIf="req.service.price">
+            <span class="label">Price:</span>
+            <span class="value">{{ formatPrice(req.service.price) }}</span>
+          </div>
+          <div class="detail-row" *ngIf="req.service.region">
+            <span class="label">Region:</span>
+            <span class="value">{{ req.service.region.name }}</span>
+          </div>
+          <div class="detail-row" *ngIf="req.service.durationHours">
+            <span class="label">Duration:</span>
+            <span class="value">{{ req.service.durationHours }} hours</span>
+          </div>
+          <div class="detail-row" *ngIf="req.service.category">
+            <span class="label">Category:</span>
+            <span class="value">{{ req.service.category }}</span>
+          </div>
+          <div class="detail-row" *ngIf="req.service.maxCapacity">
+            <span class="label">Max capacity:</span>
+            <span class="value">{{ req.service.maxCapacity }} persons</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="request-footer">
+        <div class="response-info" *ngIf="req.status !== 'PENDING'">
+          <span class="response-date">
+            Processed on {{ formatDate(req.responseDate) }}
+          </span>
+        </div>
+
+        <div class="request-actions" *ngIf="req.status === 'PENDING'">
+          <button class="btn-approve" (click)="approveTouristRequest(req)" [disabled]="processingId === req.id">
+            <span *ngIf="processingId !== req.id">✅ Approve</span>
+            <span *ngIf="processingId === req.id" class="loading-dots">...</span>
+          </button>
+          <button class="btn-reject" (click)="rejectRequestWithoutReason(req, 'tourist')" [disabled]="processingId === req.id">
+            <span *ngIf="processingId !== req.id">❌ Reject</span>
+            <span *ngIf="processingId === req.id" class="loading-dots">...</span>
+          </button>
+        </div>
+
+        <button class="btn-view" [routerLink]="['/admin/requests/tourist', req.id]">
+          View details
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Reject Dialog Modal (same for all types) -->
+<div class="modal-overlay" *ngIf="showRejectModal" (click)="closeRejectDialog()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Reject Request</h3>
+      <button class="modal-close" (click)="closeRejectDialog()">✕</button>
+    </div>
+    
+    <div class="modal-body">
+      <p class="modal-service">
+        Service: <strong>{{ selectedRequest?.service?.title || selectedRequest?.service?.name || 'Unknown' }}</strong>
+      </p>
+      <p class="modal-partner">
+        Partner: {{ selectedRequest?.partner?.firstName || '' }} {{ selectedRequest?.partner?.lastName || '' }}
+      </p>
+      
+      <div class="form-group">
+        <label for="rejectReason">Rejection reason <span class="required">*</span></label>
+        <textarea
+          id="rejectReason"
+          [(ngModel)]="rejectReason"
+          rows="4"
+          placeholder="Explain why you are rejecting this request..."
+          class="form-control"
+        ></textarea>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="closeRejectDialog()">Cancel</button>
+      <button 
+        class="btn-confirm-reject" 
+        (click)="confirmReject()" 
+        [disabled]="!rejectReason.trim() || processingId === selectedRequest?.id"
+      >
+        {{ processingId === selectedRequest?.id ? 'Processing...' : 'Confirm Rejection' }}
+      </button>
+    </div>
+  </div>
+</div>

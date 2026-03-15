@@ -1,0 +1,86 @@
+<div class="requests-container">
+  <!-- Header -->
+  <div class="header">
+    <div>
+      <h1>My Pending Requests</h1>
+      <p class="subtitle">Track your modification and deletion requests waiting for admin approval</p>
+    </div>
+    <a routerLink="/partenaire-local/dashboard" class="back-link">← Back to dashboard</a>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading your pending requests...</p>
+  </div>
+
+  <!-- Service Type Tabs -->
+  <div class="tabs" *ngIf="!loading">
+    <button class="tab-btn" [class.active]="activeTab === 'all'" (click)="filterByType('all')">
+      All ({{ allRequests.length }})
+    </button>
+    <button class="tab-btn" [class.active]="activeTab === 'INVESTMENT'" (click)="filterByType('INVESTMENT')">
+      <span class="tab-icon">📈</span> Investment ({{ getCountByType('INVESTMENT') }})
+    </button>
+    <button class="tab-btn" [class.active]="activeTab === 'COLLABORATION'" (click)="filterByType('COLLABORATION')">
+      <span class="tab-icon">🤝</span> Collaboration ({{ getCountByType('COLLABORATION') }})
+    </button>
+    <button class="tab-btn" [class.active]="activeTab === 'TOURIST'" (click)="filterByType('TOURIST')">
+      <span class="tab-icon">🌍</span> Tourism ({{ getCountByType('TOURIST') }})
+    </button>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && filteredRequests.length === 0" class="empty-state">
+    <div class="empty-icon">📋</div>
+    <h3>No pending requests</h3>
+    <p *ngIf="activeTab !== 'all'">You don't have any pending {{ getServiceTypeLabel(activeTab) }} requests</p>
+    <p *ngIf="activeTab === 'all'">You don't have any pending requests at the moment</p>
+    <a routerLink="/partenaire-local/dashboard" class="btn-primary">
+      View my services
+    </a>
+  </div>
+
+  <!-- Requests List -->
+  <div class="requests-list" *ngIf="!loading && filteredRequests.length > 0">
+    <div *ngFor="let req of filteredRequests" class="request-card status-pending">
+      <!-- Card Header -->
+      <div class="request-header">
+        <div class="request-type">
+          <!-- Service Type Badge -->
+          <span class="service-badge" [style.background-color]="getServiceColor(req.serviceType)">
+            {{ getServiceIcon(req.serviceType) }} {{ getServiceTypeLabel(req.serviceType) }}
+          </span>
+          <!-- Request Type Badge -->
+          <span class="type-badge" [class.edit]="req.requestType === 'EDIT'" [class.delete]="req.requestType === 'DELETE'">
+            {{ req.requestType === 'EDIT' ? '✏️ Modification' : '🗑️ Deletion' }}
+          </span>
+          <!-- Pending Badge -->
+          <span class="status-badge status-pending">
+            ⏳ Pending
+          </span>
+        </div>
+        <span class="request-date">{{ formatDate(req.requestDate) }}</span>
+      </div>
+
+      <!-- Card Body -->
+      <div class="request-body">
+        <h3>{{ req.service?.title || req.service?.name }}</h3>
+        <p class="reason"><strong>Reason:</strong> {{ req.reason }}</p>
+        <p class="changes" *ngIf="req.requestedChanges">
+          <strong>Requested changes:</strong> {{ req.requestedChanges }}
+        </p>
+      </div>
+
+      <!-- Card Footer -->
+      <div class="request-footer">
+        <div class="request-actions">
+          
+          <button class="btn-cancel" (click)="cancelRequest(req.id)">
+            Cancel request
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

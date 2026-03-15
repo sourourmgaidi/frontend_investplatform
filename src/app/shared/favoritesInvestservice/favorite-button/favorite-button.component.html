@@ -1,0 +1,10 @@
+<button 
+  class="favorite-btn" 
+  [class.is-favorite]="isFavorite"
+  (click)="toggleFavorite($event)"
+  [disabled]="isLoading"
+  [title]="getTooltip()"
+>
+  <span class="heart">{{ isFavorite ? '❤️' : '🤍' }}</span>
+  <span class="loading-spinner" *ngIf="isLoading">⏳</span>
+</button>

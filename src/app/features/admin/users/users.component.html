@@ -1,0 +1,320 @@
+<div class="admin-users-container">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <h1>User Management</h1>
+      <a routerLink="/admin/dashboard" class="back-to-dashboard">← Back to Dashboard</a>
+    </div>
+    <div class="header-actions">
+      <button class="refresh-btn" (click)="refreshData()" [disabled]="loading">
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div class="alert error-alert" *ngIf="error">
+    <span>{{ error }}</span>
+    <button class="close-btn" (click)="error = ''">Close</button>
+  </div>
+
+  <div class="alert success-alert" *ngIf="success">
+    <span>{{ success }}</span>
+  </div>
+
+  <!-- Statistics -->
+  <div class="stats-cards" *ngIf="statistics">
+    <div class="stat-card" *ngFor="let stat of [
+      { label: 'Investors', value: statistics.totalInvestors, color: '#27AE60' },
+      { label: 'Tourists', value: statistics.totalTourists, color: '#4A90E2' },
+      { label: 'Economic Partners', value: statistics.totalPartners, color: '#F39C12' },
+      { label: 'Local Partners', value: statistics.totalLocalPartners, color: '#9B59B6' },
+      { label: 'International Companies', value: statistics.totalInternationalCompanies, color: '#E74C3C' },
+      { label: 'Administrators', value: statistics.totalAdmins, color: '#C62828' }
+    ]">
+      <div class="stat-value" [style.color]="stat.color">{{ stat.value }}</div>
+      <div class="stat-label">{{ stat.label }}</div>
+    </div>
+    <div class="stat-card total-card">
+      <div class="stat-value">{{ statistics.totalUsers }}</div>
+      <div class="stat-label">Total</div>
+    </div>
+  </div>
+
+  <!-- Filters and Search -->
+  <div class="filters-bar">
+    <div class="search-box">
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        (keyup.enter)="searchUsers()"
+        placeholder="Search by first name, last name, or email..."
+        class="search-input"
+      />
+      <button class="search-btn" (click)="searchUsers()" [disabled]="loading">Search</button>
+    </div>
+
+    <div class="filter-box">
+      <label for="roleFilter">Filter by role:</label>
+      <select
+        id="roleFilter"
+        [(ngModel)]="selectedRole"
+        (change)="applyFilter()"
+        class="role-select"
+      >
+        <option value="ALL">All Roles</option>
+        <option value="INVESTOR">Investors</option>
+        <option value="TOURIST">Tourists</option>
+        <option value="PARTNER">Economic Partners</option>
+        <option value="LOCAL_PARTNER">Local Partners</option>
+        <option value="INTERNATIONAL_COMPANY">International Companies</option>
+        <option value="ADMIN">Administrators</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-container" *ngIf="loading">
+    <p>Loading users...</p>
+  </div>
+
+  <!-- Users Table -->
+  <div class="table-container" *ngIf="!loading">
+    <div class="table-header">
+      <span class="col-avatar"></span>
+      <span class="col-name">Full Name</span>
+      <span class="col-email">Email</span>
+      <span class="col-role">Role</span>
+      <span class="col-phone">Phone</span>
+      <span class="col-status">Status</span>
+      <span class="col-actions">Actions</span>
+    </div>
+
+    <div class="table-body">
+      <div class="table-row" *ngFor="let user of paginatedUsers">
+        <div class="col-avatar">
+          <div class="avatar" [style.background]="getRoleColor(user.role)">
+            {{ getUserInitials(user) }}
+          </div>
+        </div>
+        <div class="col-name">{{ user.firstName || '' }} {{ user.lastName || '' }}</div>
+        <div class="col-email">{{ user.email }}</div>
+        <div class="col-role">
+          <span class="role-badge" [style.background]="getRoleColor(user.role)">
+            {{ getRoleLabel(user.role) }}
+          </span>
+        </div>
+        <div class="col-phone">{{ user.phone || '-' }}</div>
+        <div class="col-status">
+          <span class="status-badge" [class.active]="user.active" [class.inactive]="!user.active">
+            {{ user.active ? 'Active' : 'Inactive' }}
+          </span>
+        </div>
+        <div class="col-actions">
+          <button class="action-btn view-btn" (click)="viewUserDetails(user)" title="View Details">
+            View
+          </button>
+          <button class="action-btn delete-btn" (click)="confirmDelete(user.email)" title="Delete">
+            Delete
+          </button>
+        </div>
+      </div>
+
+      <div class="empty-state" *ngIf="filteredUsers.length === 0">
+        <p>No users found</p>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination" *ngIf="filteredUsers.length > 0">
+      <button 
+        class="page-btn" 
+        [disabled]="currentPage === 1"
+        (click)="changePage(currentPage - 1)">
+        Previous
+      </button>
+      
+      <span class="page-info">
+        Page {{ currentPage }} of {{ totalPages }}
+        ({{ filteredUsers.length }} users)
+      </span>
+      
+      <button 
+        class="page-btn" 
+        [disabled]="currentPage === totalPages"
+        (click)="changePage(currentPage + 1)">
+        Next
+      </button>
+    </div>
+  </div>
+
+  <!-- User Details Modal -->
+  <div class="modal-overlay" *ngIf="showUserDetails" (click)="closeDetails()">
+    <div class="modal-content user-details-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>User Details</h2>
+        <button class="close-btn" (click)="closeDetails()">Close</button>
+      </div>
+
+      <div class="modal-body" *ngIf="selectedUser">
+        <div class="user-header">
+          <div class="user-avatar" [style.background]="getRoleColor(selectedUser.role)">
+            {{ getUserInitials(selectedUser) }}
+          </div>
+          <div class="user-title">
+            <h3>{{ selectedUser.firstName || '' }} {{ selectedUser.lastName || '' }}</h3>
+            <span class="user-role-badge" [style.background]="getRoleColor(selectedUser.role)">
+              {{ getRoleLabel(selectedUser.role) }}
+            </span>
+          </div>
+        </div>
+
+        <div class="details-grid">
+          <div class="detail-item">
+            <span class="detail-label">Email</span>
+            <span class="detail-value">{{ selectedUser.email }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Phone</span>
+            <span class="detail-value">{{ selectedUser.phone || 'Not Provided' }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Registration Date</span>
+            <span class="detail-value">{{ formatDate(selectedUser.registrationDate) }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Status</span>
+            <span class="detail-value">
+              <span class="status-badge" [class.active]="selectedUser.active" [class.inactive]="!selectedUser.active">
+                {{ selectedUser.active ? 'Active' : 'Inactive' }}
+              </span>
+            </span>
+          </div>
+
+          <!-- Role-specific fields -->
+          <ng-container [ngSwitch]="selectedUser.role">
+            <ng-container *ngSwitchCase="'INVESTOR'">
+              <div class="detail-item">
+                <span class="detail-label">Company</span>
+                <span class="detail-value">{{ selectedUser.company || 'Not Provided' }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Country of Origin</span>
+                <span class="detail-value">{{ selectedUser.originCountry || 'Not Provided' }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Sector</span>
+                <span class="detail-value">{{ selectedUser.activitySector || 'Not Provided' }}</span>
+              </div>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="'INTERNATIONAL_COMPANY'">
+              <div class="detail-item">
+                <span class="detail-label">Company</span>
+                <span class="detail-value">{{ selectedUser.companyName || 'Not Provided' }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Country of Origin</span>
+                <span class="detail-value">{{ selectedUser.originCountry || 'Not Provided' }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Sector</span>
+                <span class="detail-value">{{ selectedUser.activitySector || 'Not Provided' }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">SIRET</span>
+                <span class="detail-value">{{ selectedUser.siret || 'Not Provided' }}</span>
+              </div>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="'LOCAL_PARTNER'">
+              <div class="detail-item">
+                <span class="detail-label">Region</span>
+                <span class="detail-value">{{ selectedUser.region || 'Not Provided' }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Address</span>
+                <span class="detail-value">{{ selectedUser.address || 'Not Provided' }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Sector</span>
+                <span class="detail-value">{{ selectedUser.activityDomain || 'Not Provided' }}</span>
+              </div>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="'PARTNER'">
+              <div class="detail-item">
+                <span class="detail-label">Country of Origin</span>
+                <span class="detail-value">{{ selectedUser.countryOfOrigin || 'Not Provided' }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Sector</span>
+                <span class="detail-value">{{ selectedUser.businessSector || 'Not Provided' }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Address</span>
+                <span class="detail-value">{{ selectedUser.headquartersAddress || 'Not Provided' }}</span>
+              </div>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="'TOURIST'">
+              <div class="detail-item">
+                <span class="detail-label">Nationality</span>
+                <span class="detail-value">{{ selectedUser.nationality || 'Not Provided' }}</span>
+              </div>
+            </ng-container>
+          </ng-container>
+
+          <div class="detail-item full-width" *ngIf="selectedUser.website">
+            <span class="detail-label">Website</span>
+            <span class="detail-value">
+              <a [href]="selectedUser.website" target="_blank">{{ selectedUser.website }}</a>
+            </span>
+          </div>
+
+          <div class="detail-item full-width" *ngIf="selectedUser.linkedinProfile">
+            <span class="detail-label">LinkedIn</span>
+            <span class="detail-value">
+              <a [href]="selectedUser.linkedinProfile" target="_blank">{{ selectedUser.linkedinProfile }}</a>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="closeDetails()">Close</button>
+        <button class="btn-delete" (click)="confirmDelete(selectedUser?.email || ''); closeDetails()">
+          Delete User
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div class="modal-overlay" *ngIf="showDeleteModal" (click)="cancelDelete()">
+    <div class="modal-content delete-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Confirm Deletion</h3>
+        <button class="close-btn" (click)="cancelDelete()">Close</button>
+      </div>
+
+      <div class="modal-body">
+        <p>
+          Are you sure you want to delete user<br>
+          <strong>{{ userToDelete }}</strong>?
+        </p>
+        <p>This action cannot be undone.</p>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="cancelDelete()" [disabled]="loading">Cancel</button>
+        <button class="btn-delete" (click)="deleteUser()" [disabled]="loading">
+          <span *ngIf="!loading">Delete Permanently</span>
+          <span *ngIf="loading">Deleting...</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>

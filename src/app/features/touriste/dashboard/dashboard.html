@@ -1,0 +1,40 @@
+<div class="dashboard-container">
+  <app-navbar></app-navbar>
+  <main class="dashboard-content">
+
+    <!-- Header avec cloche -->
+    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+      <div>
+        <h1>Tourist Dashboard</h1>
+        <p>Discover the best destinations in Tunisia.</p>
+      </div>
+      <app-notification-bell></app-notification-bell>
+    </div>
+
+    <div class="stats-cards">
+      <!-- Saved Destinations Card (sans lien) -->
+      <div class="stat-card">
+        <h3>Saved Destinations</h3>
+        <p class="stat-number">{{ savedCount }}</p>
+      </div>
+      
+      <!-- Tourist Services Card avec lien et compteur -->
+      <a routerLink="/touriste/services" class="stat-card" style="text-decoration: none; display: block; cursor: pointer;">
+        <h3>Tourist Services</h3>
+        <p class="stat-number">{{ servicesCount }}</p>
+      </a>
+
+      <!-- ✅ NOUVEAU: Favorites Card avec lien et compteur -->
+      <a routerLink="/touriste/favoris" class="stat-card" style="text-decoration: none; display: block; cursor: pointer;">
+        <h3>❤️ My Favorites</h3>
+        <p class="stat-number">{{ favoritesCount }}</p>
+      </a>
+
+      <!-- Recommendations Card (sans lien) -->
+      <div class="stat-card">
+        <h3>Recommendations</h3>
+        <p class="stat-number">{{ recommendationsCount }}</p>
+      </div>
+    </div>
+  </main>
+</div>

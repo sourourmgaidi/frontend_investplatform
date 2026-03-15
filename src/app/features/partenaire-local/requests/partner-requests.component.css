@@ -1,0 +1,278 @@
+.requests-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+}
+
+.header h1 {
+  font-size: 28px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 8px 0;
+}
+
+.subtitle {
+  color: #6B7280;
+  font-size: 16px;
+  margin: 0;
+}
+
+.back-link {
+  color: #4F46E5;
+  text-decoration: none;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+}
+
+.back-link:hover {
+  background-color: #EEF2FF;
+}
+
+/* Loading State */
+.loading-state {
+  text-align: center;
+  padding: 60px 0;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #E5E7EB;
+  border-top-color: #4F46E5;
+  border-radius: 50%;
+  margin: 0 auto 16px;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  border-bottom: 2px solid #E5E7EB;
+  padding-bottom: 8px;
+}
+
+.tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #6B7280;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tab-btn:hover {
+  background-color: #F3F4F6;
+  color: #111827;
+}
+
+.tab-btn.active {
+  background-color: #EEF2FF;
+  color: #4F46E5;
+}
+
+.tab-icon {
+  font-size: 18px;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  background: #F9FAFB;
+  border-radius: 16px;
+}
+
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.empty-state h3 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 8px 0;
+}
+
+.empty-state p {
+  color: #6B7280;
+  margin: 0 0 24px 0;
+}
+
+.btn-primary {
+  display: inline-block;
+  padding: 12px 24px;
+  background-color: #4F46E5;
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.btn-primary:hover {
+  background-color: #6366F1;
+}
+
+/* Requests List */
+.requests-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.request-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #E5E7EB;
+}
+
+.request-card.status-pending {
+  border-left: 4px solid #F59E0B;
+}
+
+/* Request Header */
+.request-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.request-type {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.service-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  color: white;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.type-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  background-color: #F3F4F6;
+  color: #374151;
+}
+
+.type-badge.edit {
+  background-color: #E0F2FE;
+  color: #0369A1;
+}
+
+.type-badge.delete {
+  background-color: #FEE2E2;
+  color: #B91C1C;
+}
+
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.status-badge.status-pending {
+  background-color: #FEF3C7;
+  color: #92400E;
+}
+
+.request-date {
+  color: #6B7280;
+  font-size: 14px;
+}
+
+/* Request Body */
+.request-body {
+  margin-bottom: 16px;
+}
+
+.request-body h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 12px 0;
+}
+
+.reason, .changes {
+  margin: 8px 0;
+  color: #4B5563;
+  line-height: 1.5;
+}
+
+.reason strong, .changes strong {
+  color: #111827;
+}
+
+/* Request Footer */
+.request-footer {
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid #E5E7EB;
+  padding-top: 16px;
+}
+
+.request-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-view, .btn-cancel {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-view {
+  background-color: #F3F4F6;
+  color: #374151;
+  border: 1px solid #D1D5DB;
+  text-decoration: none;
+}
+
+.btn-view:hover {
+  background-color: #E5E7EB;
+}
+
+.btn-cancel {
+  background-color: #FEE2E2;
+  color: #B91C1C;
+  border: 1px solid #FECACA;
+}
+
+.btn-cancel:hover {
+  background-color: #FECACA;
+}
